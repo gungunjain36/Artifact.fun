@@ -56,15 +56,15 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
   - **AI-Generated Memes** – Using **Venice.AI**, the platform analyzes real-time trends to create viral memes automatically.  
 - **ElizaOS Integration**: Ensures autonomous AI functionality for meme generation.  
 
-**3. Automated NFT Minting & Marketing (In Progress)**  
+**3. Automated NFT Minting & Marketing**  
 - **AI-Driven NFT Minting**: Selected memes are automatically converted into NFTs using an **Autonomous Meme Generation Agent**.  
 - **Twitter & Social Media Automation**: AI autonomously promotes viral memes by posting them on social platforms.  
 
-**4. Exclusive NFT Auctions (Planned)**  
+**4. Exclusive NFT Auctions (In Development)**
 - **Auction-Only NFT Sales**: Memes recognized for their artistic and cultural significance can only be bought or sold through exclusive auctions, ensuring their value.  
 - **Creator Royalties**: Original creators receive a percentage of future NFT resales.  
 
-**5. Engagement & Rewards System (Planned)**  
+**5. Engagement & Rewards System**  
 - **On-Chain Participation Rewards**: Users earn points and **ranking NFTs** based on their engagement in voting, meme creation, and auctions.  
 - **Community-Driven Recognition**: Top contributors gain **exclusive privileges** within the Artifact.fun ecosystem.
 
@@ -78,7 +78,7 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - AI continuously monitors Web3 social trends to **autonomously generate memes** with viral potential.  
 - Uses **advanced AI models** to craft high-quality, culturally relevant meme content.  
 
-**✅ AI-Driven NFT Minting & Social Media Promotion (In Development)**  
+**✅ AI-Driven NFT Minting & Social Media Promotion**  
 - Selected memes are automatically **minted as NFTs** and stored on-chain.  
 - AI agents market these memes by posting and promoting them on **Twitter and other social media** platforms.  
 
@@ -86,11 +86,11 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - Users can **design and upload their own memes** or let AI handle the creation based on current trends.  
 - AI-generated memes are optimized for **maximum viral engagement**.  
 
-**✅ Exclusive Meme NFT Auctions (Planned)**  
+**✅ Exclusive Meme NFT Auctions (In Development)**
 - Meme NFTs can only be sold through an **auction system**, ensuring fair pricing and increased scarcity.  
 - Top-ranked memes gain **higher value** due to their exclusivity.  
 
-**✅ User Engagement & Ranking NFT Rewards (Planned)**  
+**✅ User Engagement & Ranking NFT Rewards**  
 - Users earn **ranking NFTs** based on their activity (voting, creating memes, and participating in auctions).  
 - Ranking NFTs provide **exclusive benefits** within the Artifact.fun platform.
 
