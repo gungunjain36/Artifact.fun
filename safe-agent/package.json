@@ -6,21 +6,31 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsx core/smart-account.ts",
-    "spend": "tsx core/agent-spend.ts"
+    "spend": "tsx core/agent-spend.ts",
+    "api": "tsx api/server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fileverse/agents": "^1.0.4",
     "@langchain/core": "^0.3.39",
     "@langchain/langgraph": "^0.2.45",
     "@langchain/ollama": "^0.2.0",
     "@safe-global/protocol-kit": "^5.2.2",
     "@safe-global/safe-modules-deployments": "^2.2.6",
     "@safe-global/types-kit": "^1.0.0",
+    "@story-protocol/core-sdk": "1.3.0-beta.3",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pinata-web3": "^0.5.4",
     "tsx": "^4.19.2",
     "viem": "^2.23.1",
     "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0"
   }
 }
