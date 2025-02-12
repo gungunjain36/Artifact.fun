@@ -10,6 +10,21 @@
   <a href="" style="color: #a77dff">Contract</a> | <a href="" style="color: #a77dff">AI agent Contract</a>
 </p>
 
+## Sponsor
+<a href="https://safe.global/core" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/d4c646f1-8189-4c3a-9ef3-875889db7705" width="100" height="100">
+<a><a href="https://fileverse.io/" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/5290e8bd-ca74-4808-9339-0978a03ce65b" width="100" height="100">
+<a><a><a href="https://www.story.foundation/" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/90a235c7-8460-4ee3-9915-ae4bcf36a523" width="100" height="100">
+<a><a><a href="https://elizaos.ai/" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/9155c079-210e-46d0-bb11-865e2e90f68e" width="100" height="100">
+<a><a><a href="https://venice.ai/home" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/f1b38dc8-fa5b-4ae3-bbcd-9cfb7fbfdc5d" width="100" height="100">
+<a><a><a href="https://aws.amazon.com/web3/" height="5" width="10" target="_blank">
+	<img src="https://github.com/user-attachments/assets/cdd69fe6-4276-430d-b296-49a2f9ea7245" width="100" height="100">
+<a><br></br>
+
 ## Concept Category
 > **Who’s the next trendsetter?**
 
