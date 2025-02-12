@@ -28,7 +28,7 @@ Artifact.fun is not just a meme trading platform. We recognize memes as digital 
 
 ## Project Description
 
-Artifact.fun is a Web3-based meme trendsetter platform that discovers creative meme creators and ensures their works receive proper recognition. Users participate in on-chain voting to select the best memes, and AI agents **automatically mint them as NFTs** and promote them. Additionally, an **NFT auction system** will be implemented to maximize the economic value of memes and reward community members for their participation.
+Artifact.fun is a Web3-powered meme creation and discovery platform that transforms viral meme culture into digital assets. Through **on-chain voting**, community-driven trends emerge, while AI automates meme generation, NFT minting, and marketing. By integrating **Venice.AI**, users can either manually create memes or let AI analyze trends and generate viral-ready memes. The platform ensures true creator ownership, engagement rewards, and NFT auctions, making memes more than just entertainment—**they become valuable digital assets.**  
 
 ## Problem
 
@@ -46,46 +46,53 @@ Artifact.fun is a Web3-based meme trendsetter platform that discovers creative m
 
 ## Solution
 
-**✅ On-Chain Voting System**
-- The community directly participates in selecting the most popular memes through blockchain-based voting.
-- Voting results are **immutably recorded on-chain**, ensuring transparency.
+**1. Decentralized Meme Trend Discovery**  
+- **On-Chain Voting System**: The community decides which memes are popular through transparent, decentralized voting.  
+- **Meme Ranking System**: High-ranking memes gain more visibility, increasing their chance to be minted as NFTs.  
 
-**✅ AI-Powered NFT Minting & Promotion**
-- Selected memes are automatically **minted as NFTs** through AI agents.
-- Automated posting to Twitter and other social platforms helps **spread trends organically**.
+**2. AI-Powered Meme Creation**  
+- **Two Creation Options**:  
+  - **Manual Creation** – Users can design and upload their own memes.  
+  - **AI-Generated Memes** – Using **Venice.AI**, the platform analyzes real-time trends to create viral memes automatically.  
+- **ElizaOS Integration**: Ensures autonomous AI functionality for meme generation.  
 
-**✅ Meme Creator Compensation System**
-- NFT minting ensures that creators **retain ownership** of their works.
-- Auction-based sales **generate revenue**, with **royalties granted on each resale**.
+**3. Automated NFT Minting & Marketing (In Progress)**  
+- **AI-Driven NFT Minting**: Selected memes are automatically converted into NFTs using an **Autonomous Meme Generation Agent**.  
+- **Twitter & Social Media Automation**: AI autonomously promotes viral memes by posting them on social platforms.  
 
-**✅ NFT Auction System *(Planned Feature)***
-- Meme NFTs will be **sold exclusively through auctions**, ensuring scarcity and maintaining value.
+**4. Exclusive NFT Auctions (Planned)**  
+- **Auction-Only NFT Sales**: Memes recognized for their artistic and cultural significance can only be bought or sold through exclusive auctions, ensuring their value.  
+- **Creator Royalties**: Original creators receive a percentage of future NFT resales.  
 
-**✅ Reward System for Voters & Participants**
-- Users who vote on meme rankings **earn on-chain points** that can be redeemed within the platform.
-- Accumulated points allow users to **mint their own ranking NFTs**, enhancing their status in the community.
+**5. Engagement & Rewards System (Planned)**  
+- **On-Chain Participation Rewards**: Users earn points and **ranking NFTs** based on their engagement in voting, meme creation, and auctions.  
+- **Community-Driven Recognition**: Top contributors gain **exclusive privileges** within the Artifact.fun ecosystem.
 
 ## Key Features
 
-**1️⃣ Web3 Community Voting System**
-- Community-driven **on-chain voting** determines the top memes.
-- **Blockchain-secured voting records** ensure fairness and transparency.
+**✅ On-Chain Voting for Meme Discovery**  
+- A decentralized voting mechanism ensures that only the most creative and impactful memes are selected.  
+- Engaged users influence the next viral trends while earning rewards.  
 
-**2️⃣ AI-Powered NFT Minting & Social Media Promotion**
-- Selected memes are automatically converted into **NFTs via AI agents**.
-- The system **automatically posts memes** on Twitter and other social media platforms for maximum exposure.
+**✅ Autonomous Meme Generation Agent (Powered by Venice.AI)**  
+- AI continuously monitors Web3 social trends to **autonomously generate memes** with viral potential.  
+- Uses **advanced AI models** to craft high-quality, culturally relevant meme content.  
 
-**3️⃣ Creator Ownership & Monetization**
-- Creators retain ownership of their NFTs and **generate income** through sales.
-- **Royalty fees** are automatically distributed on each resale, ensuring continuous rewards.
+**✅ AI-Driven NFT Minting & Social Media Promotion (In Development)**  
+- Selected memes are automatically **minted as NFTs** and stored on-chain.  
+- AI agents market these memes by posting and promoting them on **Twitter and other social media** platforms.  
 
-**4️⃣ NFT Auction System (Planned Feature)**
-- **Memes can only be bought and sold through auctions**, increasing scarcity and value.
-- Ensures **meme exclusivity and higher value recognition**.
+**✅ Flexible Meme Creation: Manual & AI-Generated Options**  
+- Users can **design and upload their own memes** or let AI handle the creation based on current trends.  
+- AI-generated memes are optimized for **maximum viral engagement**.  
 
-**5️⃣ Participation Rewards**
-- Users earn **on-chain points** for voting and engaging in the platform.
-- These points can be **redeemed for ranking NFTs**, offering a **status boost within the community**.
+**✅ Exclusive Meme NFT Auctions (Planned)**  
+- Meme NFTs can only be sold through an **auction system**, ensuring fair pricing and increased scarcity.  
+- Top-ranked memes gain **higher value** due to their exclusivity.  
+
+**✅ User Engagement & Ranking NFT Rewards (Planned)**  
+- Users earn **ranking NFTs** based on their activity (voting, creating memes, and participating in auctions).  
+- Ranking NFTs provide **exclusive benefits** within the Artifact.fun platform.
 
 ## Business Model
 
