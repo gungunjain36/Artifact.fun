@@ -10,7 +10,9 @@
   <a href="" style="color: #a77dff">Contract</a> | <a href="" style="color: #a77dff">AI agent Contract</a>
 </p>
 
-## Sponsor
+<h2 align="center">Sponsor</h2>
+
+<p align="center">
 <a href="https://safe.global/core" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/d4c646f1-8189-4c3a-9ef3-875889db7705" width="100" height="100">
 <a><a href="https://fileverse.io/" height="5" width="10" target="_blank">
@@ -23,7 +25,9 @@
 	<img src="https://github.com/user-attachments/assets/f1b38dc8-fa5b-4ae3-bbcd-9cfb7fbfdc5d" width="100" height="100">
 <a><a><a href="https://aws.amazon.com/web3/" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/cdd69fe6-4276-430d-b296-49a2f9ea7245" width="100" height="100">
-<a><br></br>
+<a></p>
+
+---
 
 ## Concept Category
 > **Who’s the next trendsetter?**
