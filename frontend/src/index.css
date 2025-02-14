@@ -1,53 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
 
 @import "tailwindcss";
 
-/* * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: white;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Reset button styles */
-/* button {
-  all: unset;
-  cursor: pointer;
-  font-family: inherit;
-} */
-
-/* Reset link styles */
-/* a {
-  text-decoration: none;
-  color: inherit;
-} */
-
 :root {
+  /* Colors */
+  --color-dark: #131315;
+  --color-blue: #0F62FE;
+  --color-background: #FFFBEA;
+  --color-orange: #EE5A0E;
+  --color-orange-light: #FF7F3D;
+
+  /* Gradients */
+  --gradient-orange-blue: linear-gradient(90deg, #EE5A0E 0%, #0F62FE 100%);
+  --gradient-orange: linear-gradient(to right, #EE5A0E, #FF7F3D);
+  --gradient-best-memes: linear-gradient(90deg, rgba(15, 98, 254, 0.13) 26.74%, rgba(207, 79, 96, 0.13) 42.55%, rgba(253, 122, 55, 0.13) 53.72%, rgba(255, 251, 234, 0.13) 84.08%);
+
+  /* Font Settings */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Urbanist', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  font-family: 'Urbanist', system-ui, -apple-system, sans-serif;
+}
+
+.font-urbanist {
+  font-family: 'Urbanist', system-ui, -apple-system, sans-serif;
+}
+
+/* Gradient Button Animation */
+.gradient-button {
+  background: var(--gradient-orange-blue);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gradient-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.gradient-button:active {
+  transform: translateY(0);
+}
+
+/* Spring Animation */
+@keyframes spring {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.spring-animation {
+  animation: spring 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #000000;
-  color: #ffffff;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-dark);
+  font-family: 'Urbanist', system-ui, -apple-system, sans-serif;
 }
 
 /* Custom scrollbar */
@@ -83,15 +105,32 @@ h1 {
   line-height: 1.1;
 }
 
-/* @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+.best-memes-container {
+  width: 100%;
+  max-width: 1232px;
+  height: 637px;
+  border-radius: 32px;
+  border: 1px solid #9C9C9C;
+  background: var(--gradient-best-memes);
+  margin: 0 auto;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 1280px) {
+  .best-memes-container {
+    max-width: 95%;
+    height: auto;
+    min-height: 500px;
   }
-  a:hover {
-    color: #747bff;
+}
+
+@media (max-width: 768px) {
+  .best-memes-container {
+    max-width: 100%;
+    border-radius: 24px;
+    min-height: 400px;
   }
-  button {
-    background-color: #f9f9f9;
-  }
-}  */
+}
+

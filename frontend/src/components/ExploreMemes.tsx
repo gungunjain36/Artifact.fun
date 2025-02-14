@@ -730,97 +730,95 @@ function ExploreMemes() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      
-        {/* Accent gradient div */}
-        <div className="relative w-full h-[300px] rounded-t-full overflow-hidden mt-12">
-          <div className="absolute inset-0" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <h1 className="text-[64px] font-bold text-white mb-2 font-['Poppins'] text-center">
-              Discover Memes
-            </h1>
-            <p className="text-white/60 text-lg font-['Poppins'] text-center">
-              Discover and vote for the best memes
-            </p>
-          </div>
+    <div className="relative min-h-screen bg-[#FFFBEA]">
+      {/* Header Section */}
+      <div className="relative w-full h-[300px] overflow-hidden mt-12">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <h1 className="text-[64px] font-bold text-[#131315] font-urbanist text-center">
+            Discover Memes
+          </h1>
+          <p className="text-[#131315]/60 text-lg font-urbanist text-center">
+            Discover and vote for the best memes
+          </p>
         </div>
-      
-        {/* Voting Information */}
-        <div className="relative w-full h-[300px] rounded-t-full mb-12 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#010EFB] to-[#121212] opacity-45" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <h2 className="text-3xl font-bold text-white mb-2 font-['Poppins'] text-center">
-              Voting Information
-            </h2>
-            <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
-              <div className="bg-[#1A1A1A]/50 backdrop-blur-sm rounded-2xl p-6">
-                <span className="text-[#FFD700] text-sm font-medium font-['Poppins']">vote cost</span>
-                <p className="text-white text-2xl font-bold font-['Poppins']">
-                  {votingConfig ? ethers.formatEther(votingConfig.voteCost) : '0.01'} ETH
-                </p>
-              </div>
-              <div className="bg-[#1A1A1A]/50 backdrop-blur-sm rounded-2xl p-6">
-                <span className="text-[#FFD700] text-sm font-medium font-['Poppins']">max votes</span>
-                <p className="text-white text-2xl font-bold font-['Poppins']">
-                  {votingConfig ? votingConfig.maxVotes : '100'}
-                </p>
-              </div>
+      </div>
+    
+      {/* Voting Information */}
+      <div className="relative w-full h-[300px] rounded-t-full mb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#EE5A0E] to-[#0F62FE] opacity-5" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <h2 className="text-3xl font-bold text-[#131315] mb-2 font-urbanist text-center">
+            Voting Information
+          </h2>
+          <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
+            <div className="bg-[#FFFBEA] backdrop-blur-sm rounded-2xl p-6 border border-[#9C9C9C]">
+              <span className="text-[#EE5A0E] text-sm font-medium font-urbanist">vote cost</span>
+              <p className="text-[#131315] text-2xl font-bold font-urbanist">
+                {votingConfig ? ethers.formatEther(votingConfig.voteCost) : '0.01'} ETH
+              </p>
             </div>
-            {!authenticated && (
-              <button
-                onClick={login}
-                className="mt-8 px-8 py-3 bg-[#FFD700] text-[#121212] rounded-full font-['Poppins'] font-medium hover:bg-[#FFD700]/90 transition-all"
-              >
-                + connect wallet
-              </button>
-            )}
+            <div className="bg-[#FFFBEA] backdrop-blur-sm rounded-2xl p-6 border border-[#9C9C9C]">
+              <span className="text-[#EE5A0E] text-sm font-medium font-urbanist">max votes</span>
+              <p className="text-[#131315] text-2xl font-bold font-urbanist">
+                {votingConfig ? votingConfig.maxVotes : '100'}
+              </p>
+            </div>
           </div>
+          {!authenticated && (
+            <button
+              onClick={login}
+              className="mt-8 px-8 py-3 bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white rounded-full font-urbanist font-medium hover:opacity-90 transition-all"
+            >
+              + CONNECT WALLET
+            </button>
+          )}
         </div>
+      </div>
 
       <div className="relative max-w-7xl mx-auto px-4">
-
-
         {/* Filters Section */}
-        <div className="flex items-center justify-between py-6 mb-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-6 mb-8 gap-4">
           {/* Left side - Filters */}
-          <div className="flex items-center gap-4">
-            <span className="text-white/60 text-sm font-['Poppins']">Filter</span>
-            <button 
-              onClick={() => setActiveFilter('top rated')}
-              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-['Poppins'] ${
-                activeFilter === 'top rated' 
-                  ? 'border-[#FFD700] text-[#FFD700]' 
-                  : 'border-transparent text-white/60 hover:text-white'
-              }`}
-            >
-              top rated
-            </button>
-            <button 
-              onClick={() => setActiveFilter('new')}
-              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-['Poppins'] ${
-                activeFilter === 'new' 
-                  ? 'border-[#FFD700] text-[#FFD700]' 
-                  : 'border-transparent text-white/60 hover:text-white'
-              }`}
-            >
-              new
-            </button>
-            <button 
-              onClick={() => setActiveFilter('nft minted')}
-              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-['Poppins'] ${
-                activeFilter === 'nft minted' 
-                  ? 'border-[#FFD700] text-[#FFD700]' 
-                  : 'border-transparent text-white/60 hover:text-white'
-              }`}
-            >
-              NFT minted
-            </button>
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-[#131315]/60 text-sm font-urbanist">Filter</span>
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => setActiveFilter('top rated')}
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-urbanist ${
+                  activeFilter === 'top rated' 
+                    ? 'border-[#EE5A0E] text-[#EE5A0E]' 
+                    : 'border-transparent text-[#131315]/60 hover:text-[#131315]'
+                }`}
+              >
+                TOP RATED
+              </button>
+              <button 
+                onClick={() => setActiveFilter('new')}
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-urbanist ${
+                  activeFilter === 'new' 
+                    ? 'border-[#EE5A0E] text-[#EE5A0E]' 
+                    : 'border-transparent text-[#131315]/60 hover:text-[#131315]'
+                }`}
+              >
+                NEW
+              </button>
+              <button 
+                onClick={() => setActiveFilter('nft minted')}
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors font-urbanist ${
+                  activeFilter === 'nft minted' 
+                    ? 'border-[#EE5A0E] text-[#EE5A0E]' 
+                    : 'border-transparent text-[#131315]/60 hover:text-[#131315]'
+                }`}
+              >
+                NFT MINTED
+              </button>
+            </div>
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-[300px]">
+          <div className="relative w-full md:w-[300px]">
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-[#131315]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -828,8 +826,8 @@ function ExploreMemes() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="search memes..."
-              className="w-full bg-transparent text-white pl-10 pr-4 py-1.5 rounded-full text-sm focus:outline-none border border-[#FFD700]/50 focus:border-[#FFD700] font-['Poppins']"
+              placeholder="Search memes..."
+              className="w-full bg-[#FFFBEA] text-[#131315] pl-10 pr-4 py-1.5 rounded-full text-sm focus:outline-none border border-[#EE5A0E]/50 focus:border-[#EE5A0E] font-urbanist"
             />
           </div>
         </div>
@@ -837,7 +835,7 @@ function ExploreMemes() {
         {/* Meme Grid */}
         {loading ? (
           <div className="flex justify-center items-center h-[420px]">
-            <div className="text-white/70 text-lg font-['Poppins']">Loading memes...</div>
+            <div className="text-[#131315]/70 text-lg font-urbanist">Loading memes...</div>
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -845,97 +843,89 @@ function ExploreMemes() {
           </div>
         ) : filteredMemes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-white/60">No memes found</p>
+            <p className="text-[#131315]/60">No memes found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {filteredMemes.map((meme) => (
-              <div key={meme.id} className="relative bg-[#1A1A1A] rounded-3xl overflow-hidden flex flex-col h-[480px] group">
-                {/* Top Bar - Fixed height */}
-                <div className="h-12 bg-black/60 backdrop-blur-sm flex items-center justify-between px-4 flex-shrink-0 z-10">
-                  {/* Left side - Vote */}
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        voteMeme(meme.id);
-                      }}
-                      disabled={!authenticated || meme.hasVoted || votingStatus[meme.id] === 'loading'}
-                      className="relative group"
-                    >
-                      <svg 
-                        className={`w-5 h-5 ${meme.hasVoted ? 'text-[#FFD700]' : 'text-white/60 group-hover:text-white'}`} 
-                        viewBox="0 0 24 24" 
-                        fill="currentColor"
+              <div key={meme.id} className="w-full h-[500px] rounded-2xl overflow-hidden bg-[#FFFBEA] border border-[#9C9C9C] group transition-all duration-300 hover:border-transparent hover:bg-gradient-to-r hover:from-[#EE5A0E] hover:to-[#0F62FE] hover:p-[1px]">
+                <div className="w-full h-full bg-[#FFFBEA] rounded-2xl overflow-hidden flex flex-col">
+                  {/* Top Bar */}
+                  <div className="h-12 bg-[#FFFBEA] flex items-center justify-between px-4 border-b border-[#9C9C9C] flex-shrink-0">
+                    {/* Vote Controls */}
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          voteMeme(meme.id);
+                        }}
+                        disabled={!authenticated || meme.hasVoted || votingStatus[meme.id] === 'loading'}
+                        className="relative group"
                       >
-                        <path d="M12 4l8 8h-6v8h-4v-8H4l8-8z"/>
-                      </svg>
-                    </button>
-                    <span className={`text-sm font-medium ${
-                      meme.hasVoted ? 'text-[#FFD700]' : 'text-white/60'
-                    }`}>
-                      {meme.voteCount}
-                    </span>
-                    <svg 
-                      className={`w-5 h-5 ${meme.hasVoted ? 'text-[#FFD700]' : 'text-white/60 group-hover:text-white'}`} 
-                      viewBox="0 0 24 24" 
-                      fill="currentColor"
-                    >
-                      <path d="M12 20l-8-8h6V4h4v8h6l-8 8z"/>
-                    </svg>
-                  </div>
-
-                  {/* Right side - NFT Badge */}
-                  {(meme.hasBeenMinted || meme.voteCount >= (votingConfig?.minVotesForWin || 0)) && (
-                    <div className="flex items-center gap-1.5">
-                      <svg className="w-4 h-4 text-[#FFD700]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                      </svg>
-                      <span className="text-sm text-[#FFD700]">
-                        {meme.hasBeenMinted ? 'NFT minted' : 'Ready to mint'}
+                        <img 
+                          src={meme.hasVoted || votingStatus[meme.id] === 'success' ? "/arrow-variant.svg" : "/arrow-up.svg"}
+                          alt="Upvote"
+                          className={`w-6 h-6 ${meme.hasVoted ? 'transform rotate-180' : ''}`}
+                        />
+                      </button>
+                      <span className={`text-sm font-medium ${
+                        meme.hasVoted ? 'text-[#EE5A0E]' : 'text-[#131315]/60'
+                      }`}>
+                        {meme.voteCount}
                       </span>
                     </div>
-                  )}
-                </div>
 
-                {/* Clickable area */}
-                <Link 
-                  to={`/meme/${meme.id}`} 
-                  className="flex flex-col flex-1"
-                >
-                  {/* Meme Image - Fixed height with overflow hidden */}
-                  <div className="h-[300px] flex-shrink-0 overflow-hidden">
-                    <img 
-                      src={meme.ipfsHash ? getIPFSGatewayURL(meme.ipfsHash) : ''}
-                      alt={meme.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-meme.png'; // Add a placeholder image
-                        e.currentTarget.onerror = null; // Prevent infinite loop
-                      }}
-                    />
+                    {/* NFT Badge */}
+                    {(meme.hasBeenMinted || meme.voteCount >= (votingConfig?.minVotesForWin || 0)) && (
+                      <div className="px-3 py-1 rounded-full border border-[#9C9C9C] bg-[#FFFBEA]">
+                        <span className="text-sm text-[#131315]">
+                          {meme.hasBeenMinted ? 'NFT minted' : 'Ready to mint'}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Content - Fixed height */}
-                  <div className="p-4 bg-[#1A1A1A] flex-1 flex flex-col">
-                    <h3 className="text-white text-lg font-semibold font-['Poppins'] mb-2 line-clamp-1">{meme.title}</h3>
-                    <p className="text-white/60 text-sm font-['Poppins'] line-clamp-2 mb-auto">{meme.description}</p>
-                    
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-white/40 text-sm">
-                        by {formatAddress(meme.creator)}
-                      </span>
-                      {meme.voteCount >= (votingConfig?.minVotesForWin || 0) && (
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <AIMarketing meme={meme} />
+                  {/* Meme Image */}
+                  <Link to={`/meme/${meme.id}`} className="flex-1 flex flex-col">
+                    <div className="h-[320px] overflow-hidden flex-shrink-0">
+                      <img 
+                        src={meme.ipfsHash ? getIPFSGatewayURL(meme.ipfsHash) : '/placeholder.svg'}
+                        alt={meme.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.onerror = null;
+                        }}
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-[#131315] text-lg font-medium mb-2 line-clamp-1 group-hover:bg-gradient-to-r group-hover:from-[#EE5A0E] group-hover:to-[#0F62FE] group-hover:text-transparent group-hover:bg-clip-text transition-all duration-300 font-urbanist">
+                          {meme.title}
+                        </h3>
+                        <p className="text-[#131315]/60 text-sm line-clamp-2 font-urbanist">
+                          {meme.description}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img src="/user.svg" alt="Creator" className="w-4 h-4 flex-shrink-0" />
+                          <span className="text-[#131315]/60 text-sm font-urbanist truncate">
+                            {formatAddress(meme.creator)}
+                          </span>
                         </div>
-                      )}
+                        {meme.voteCount >= (votingConfig?.minVotesForWin || 0) && (
+                          <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+                            <AIMarketing meme={meme} />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-
-                {/* Add auction info after vote button */}
-                {meme.hasBeenMinted && renderAuctionInfo(meme)}
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

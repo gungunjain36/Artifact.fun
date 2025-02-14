@@ -523,22 +523,22 @@ function CreateMeme() {
 
   const renderStyleSelection = () => (
     <div className="space-y-4">
-      <label className="text-white/60 text-sm font-['Poppins']">Select Meme Style</label>
+      <label className="text-[#131315]/60 text-sm font-urbanist">Select Meme Style</label>
       <div className="grid grid-cols-1 gap-3">
         {MEME_STYLES.map((style) => (
           <button
             key={style.name}
-            onClick={() => setSelectedStyle(style.name as any)}
+            onClick={() => setSelectedStyle(style.name as 'Classic Meme' | 'Dank Meme' | 'Wholesome')}
             className={`flex items-center p-4 rounded-xl transition-all ${
               selectedStyle === style.name
-                ? 'bg-[#FFD700] text-[#121212]'
-                : 'bg-[#1A1A1A] text-white/60 hover:bg-[#1A1A1A]/80 hover:text-white'
+                ? 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white'
+                : 'bg-[#FFFBEA] text-[#131315]/60 border border-[#9C9C9C] hover:border-[#EE5A0E] hover:text-[#EE5A0E]'
             }`}
           >
             <span className="text-2xl mr-3">{style.icon}</span>
             <div className="text-left">
-              <div className="font-medium">{style.name}</div>
-              <div className="text-sm opacity-80">{style.description}</div>
+              <div className="font-medium font-urbanist">{style.name}</div>
+              <div className="text-sm opacity-80 font-urbanist">{style.description}</div>
             </div>
           </button>
         ))}
@@ -550,25 +550,25 @@ function CreateMeme() {
     if (!showHistory || generationHistory.length === 0) return null;
 
     return (
-      <div className="mt-6 p-4 bg-[#1A1A1A] rounded-xl">
-        <h3 className="text-white text-lg font-medium mb-4">Generation History</h3>
+      <div className="mt-6 p-4 bg-[#FFFBEA] rounded-xl border border-[#9C9C9C]">
+        <h3 className="text-[#131315] text-lg font-medium mb-4 font-urbanist">Generation History</h3>
         <div className="space-y-4">
           {generationHistory.map((result, index) => (
-            <div key={index} className="p-4 bg-black/20 rounded-lg">
+            <div key={index} className="p-4 bg-[#FFFBEA] rounded-lg border border-[#9C9C9C]">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <span className="text-[#FFD700]">{result.metadata.style}</span>
-                  <p className="text-white/60 text-sm mt-1">{result.metadata.prompt}</p>
-                  <p className="text-white/40 text-xs mt-1">Enhanced: {result.metadata.enhancedPrompt}</p>
+                  <span className="text-[#EE5A0E] font-medium">{result.metadata.style}</span>
+                  <p className="text-[#131315]/60 text-sm mt-1">{result.metadata.prompt}</p>
+                  <p className="text-[#131315]/40 text-xs mt-1">Enhanced: {result.metadata.enhancedPrompt}</p>
                 </div>
                 <button
                   onClick={() => {
                     setImagePreview(result.imageUrl);
                     setSelectedVariation(0);
                   }}
-                  className="px-3 py-1 bg-[#FFD700]/10 text-[#FFD700] rounded-full text-sm hover:bg-[#FFD700]/20"
+                  className="px-3 py-1 bg-[#FFFBEA] text-[#EE5A0E] rounded-full text-sm border border-[#EE5A0E] hover:bg-gradient-to-r hover:from-[#EE5A0E] hover:to-[#0F62FE] hover:text-white transition-all"
                 >
-                  Use
+                  USE
                 </button>
               </div>
               <img
@@ -585,9 +585,9 @@ function CreateMeme() {
 
   const renderSubmissionLogs = () => (
     <div className="mt-8 text-left max-w-lg mx-auto">
-      <div className="bg-[#1A1A1A] rounded-xl p-4 font-mono text-sm">
+      <div className="bg-[#FFFBEA] rounded-xl p-4 font-mono text-sm border border-[#9C9C9C]">
         {submissionLogs.map((log, index) => (
-          <div key={index} className="text-white/80">
+          <div key={index} className="text-[#131315]/80">
             {log}
           </div>
         ))}
@@ -602,12 +602,12 @@ function CreateMeme() {
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
           placeholder="Describe your meme idea..."
-          className="w-full h-32 px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-2xl border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
+          className="w-full h-32 px-6 py-4 bg-[#FFFBEA] text-[#131315] placeholder-[#131315]/40 rounded-2xl border border-[#9C9C9C] focus:border-[#EE5A0E] focus:outline-none font-urbanist"
         />
         {enhancedPrompt && (
-          <div className="mt-2 p-3 bg-[#1A1A1A]/50 rounded-xl">
-            <span className="text-[#FFD700] text-sm">Enhanced Prompt:</span>
-            <p className="text-white/80 text-sm mt-1">{enhancedPrompt}</p>
+          <div className="mt-2 p-3 bg-[#FFFBEA] rounded-xl border border-[#9C9C9C]">
+            <span className="text-[#EE5A0E] text-sm font-medium">Enhanced Prompt:</span>
+            <p className="text-[#131315]/80 text-sm mt-1">{enhancedPrompt}</p>
           </div>
         )}
       </div>
@@ -618,10 +618,10 @@ function CreateMeme() {
         <button
           onClick={generateAIMeme}
           disabled={!aiPrompt || isGeneratingAI}
-          className={`flex-1 px-6 py-3 rounded-full font-['Poppins'] font-medium transition-all ${
+          className={`flex-1 px-6 py-3 rounded-full font-urbanist font-medium transition-all ${
             !aiPrompt || isGeneratingAI 
-              ? 'bg-[#1A1A1A]/50 text-white/60' 
-              : 'bg-[#FFD700] text-[#121212] hover:bg-[#FFD700]/90'
+              ? 'bg-[#9C9C9C]/20 text-[#131315]/40' 
+              : 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white hover:opacity-90'
           }`}
         >
           {isGeneratingAI ? (
@@ -633,15 +633,15 @@ function CreateMeme() {
               <span>generating...</span>
             </div>
           ) : (
-            <span>generate meme</span>
+            <span>GENERATE MEME</span>
           )}
         </button>
 
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className="px-4 py-3 bg-[#1A1A1A] text-white/60 rounded-full font-['Poppins'] hover:text-white transition-all"
+          className="px-4 py-3 bg-[#FFFBEA] text-[#131315]/60 rounded-full font-urbanist border border-[#9C9C9C] hover:text-[#EE5A0E] hover:border-[#EE5A0E] transition-all"
         >
-          {showHistory ? 'Hide History' : 'Show History'}
+          {showHistory ? 'HIDE HISTORY' : 'SHOW HISTORY'}
         </button>
       </div>
 
@@ -650,95 +650,129 @@ function CreateMeme() {
   );
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background gradient */}
-      <div className="absolute" />
+    <div className="relative min-h-screen bg-[#FFFBEA]">
+      {/* Header Section */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#EE5A0E] via-transparent to-transparent opacity-20" />
+      
+      <div className="relative max-w-[1200px] mx-auto px-4 py-5">
+      <div className="relative w-full h-[300px] overflow-hidden">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <h1 className="text-[64px] font-bold text-[#131315] font-urbanist text-center">
+            Create Your Meme
+          </h1>
+  
+        </div>
+      </div>
+        {/* Create Container */}
+        <div className="w-[1016px] h-[176px] mx-auto mb-12 p-6 rounded-2xl border border-[#9C9C9C] bg-gradient-to-b from-[#FFFBEA] to-[rgba(238,90,14,0.01)] relative overflow-hidden">
+          <div className="flex items-center justify-between gap-20">
+            {/* Create Section */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-4">
+                <img src="/magic-wand.svg" alt="Create" className="w-8 h-8" />
+                <h3 className="text-[#131315] text-[32px] font-bold font-urbanist">Create</h3>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <img src="/100-points.svg" alt="100 Points" className="h-4" />
+                <p className="text-[#131315]/60 text-sm font-urbanist">Reach 100 votes</p>
+              </div>
+            </div>
 
-        {/* Accent gradient div */}
-        <div className="relative w-full h-[300px] rounded-t-full overflow-hidden mt-22">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#010EFB] to-[#121212] opacity-20" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <h1 className="text-[64px] font-bold text-white mb-2 font-['Poppins'] text-center">
-              Create Your Meme
-            </h1>
-            <p className="text-white/60 text-lg font-['Poppins'] text-center">
-              When your meme completes its bonding curve you receive XYZ
-            </p>
+            {/* Mint Meme NFT Section */}
+            <div className="flex items-center gap-4">
+              <img src="/trophy-up.svg" alt="Mint Meme NFT" className="w-8 h-8" />
+              <div>
+                <h3 className="text-[#131315] text-lg font-semibold mb-1 font-urbanist">Mint Meme NFT</h3>
+                <p className="text-[#131315]/60 text-sm font-urbanist">Get rewarded</p>
+              </div>
+            </div>
+
+            {/* ADs AI Agent Section */}
+            <div className="flex items-center gap-4">
+              <img src="/board.png" alt="ADs AI Agent" className="w-8 h-8" />
+              <div>
+                <h3 className="text-[#131315] text-lg font-semibold mb-1 font-urbanist">ADs AI Agent</h3>
+                <p className="text-[#131315]/60 text-sm font-urbanist">Promote your meme</p>
+              </div>
+            </div>
+
+            {/* Owner NFT Section */}
+            <div className="flex items-center gap-4">
+              <img src="/castle.svg" alt="Owner NFT" className="w-8 h-8" />
+              <div>
+                <h3 className="text-[#131315] text-lg font-semibold mb-1 font-urbanist">Owner NFT</h3>
+                <p className="text-[#131315]/60 text-sm font-urbanist">Get exclusive benefits</p>
+              </div>
+            </div>
           </div>
         </div>
-      
-      <div className="relative max-w-3xl mx-auto px-4 py-16">
 
         {/* Progress Steps */}
-        <div className="flex items-stretch w-full mb-12 bg-[#0A1D0A] rounded-full overflow-hidden h-12">
+        <div className="flex items-stretch w-full mb-12 bg-[#FFFBEA] rounded-full overflow-hidden h-12 border border-[#9C9C9C]">
           <div className={`flex-1 flex items-center gap-3 px-6 ${
-            step === 1 ? 'bg-[#143114]' : ''
+            step === 1 ? 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white' : 'text-[#131315]'
           }`}>
             {step === 1 && (
-              <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             )}
-            <span className={`text-base font-medium font-['Poppins'] ${
-              step === 1 ? 'text-white' : 'text-white/60'
-            }`}>1. meme</span>
+            <span className="text-base font-medium font-urbanist">1. MEME</span>
           </div>
 
           <div className={`flex-1 flex items-center gap-3 px-6 ${
-            step === 2 ? 'bg-[#143114]' : ''
+            step === 2 ? 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white' : 'text-[#131315]'
           }`}>
             {step === 2 && (
-              <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             )}
-            <span className={`text-base font-medium font-['Poppins'] ${
-              step === 2 ? 'text-white' : 'text-white/60'
-            }`}>{authenticated ? '2. submit meme' : '2. connect wallet'}</span>
+            <span className="text-base font-medium font-urbanist">
+              {authenticated ? '2. SUBMIT MEME' : '2. CONNECT WALLET'}
+            </span>
           </div>
 
           <div className={`flex-1 flex items-center gap-3 px-6 ${
-            step === 3 ? 'bg-[#143114]' : ''
+            step === 3 ? 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white' : 'text-[#131315]'
           }`}>
             {step === 3 && (
-              <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             )}
-            <span className={`text-base font-medium font-['Poppins'] ${
-              step === 3 ? 'text-white' : 'text-white/60'
-            }`}>3. AI Marketing</span>
+            <span className="text-base font-medium font-urbanist">3. AI MARKETING</span>
           </div>
         </div>
 
         {/* Upload Method Selection */}
-        <div className="flex gap-2 mb-8 bg-[#1A1A1A] p-1 rounded-full max-w-md mx-auto">
+        <div className="flex gap-2 mb-8 bg-[#FFFBEA] p-1 rounded-full max-w-md mx-auto border border-[#9C9C9C]">
           <button
             onClick={() => setUploadMethod('ai')}
-            className={`flex-1 px-6 py-2.5 rounded-full font-['Poppins'] font-medium transition-all ${
+            className={`flex-1 px-6 py-2.5 rounded-full font-urbanist font-medium transition-all ${
               uploadMethod === 'ai' 
-                ? 'bg-[#FFD700] text-[#121212]' 
-                : 'text-white/60 hover:text-white'
+                ? 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white' 
+                : 'text-[#131315]/60 hover:text-[#131315]'
             }`}
           >
-            generate with ai
+            GENERATE WITH AI
           </button>
           <button
             onClick={() => setUploadMethod('manual')}
-            className={`flex-1 px-6 py-2.5 rounded-full font-['Poppins'] font-medium transition-all ${
+            className={`flex-1 px-6 py-2.5 rounded-full font-urbanist font-medium transition-all ${
               uploadMethod === 'manual' 
-                ? 'bg-[#1A1A1A] text-[#FFD700] border border-[#FFD700]' 
-                : 'text-white/60 hover:text-white'
+                ? 'bg-[#FFFBEA] text-[#EE5A0E] border border-[#EE5A0E]' 
+                : 'text-[#131315]/60 hover:text-[#131315]'
             }`}
           >
-            upload your meme
+            UPLOAD YOUR MEME
           </button>
         </div>
 
-        <p className="text-white/60 text-center text-sm mb-8 font-['Poppins']">
+        <p className="text-[#131315]/60 text-center text-sm mb-8 font-urbanist">
           You can either generate your memes with our AI superpowers or<br />
           upload your own meme that you created before
         </p>
@@ -761,46 +795,35 @@ function CreateMeme() {
                   />
                   <label
                     htmlFor="meme-upload"
-                    className="block w-full aspect-square bg-[#1A1A1A] border-2 border-dashed border-[#FFD700]/20 rounded-2xl cursor-pointer hover:border-[#FFD700]/40 transition-colors"
+                    className="block w-full aspect-square bg-[#FFFBEA] border border-[#9C9C9C] rounded-2xl cursor-pointer hover:border-[#EE5A0E] transition-colors"
                   >
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 mb-4 text-[#FFD700]/60">
+                      <div className="w-12 h-12 mb-4 text-[#EE5A0E]">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <span className="text-white/60 font-['Poppins']">Click to upload your meme</span>
+                      <span className="text-[#131315]/60 font-urbanist">Click to upload your meme</span>
                     </div>
                   </label>
                 </div>
               )}
 
               {imagePreview && (
-                <div className="relative w-full aspect-square bg-[#1A1A1A] rounded-2xl overflow-hidden">
+                <div className="relative w-full aspect-square bg-[#FFFBEA] rounded-2xl overflow-hidden border border-[#9C9C9C]">
                   <img
                     src={imagePreview}
                     alt="Meme preview"
                     className="w-full h-full object-contain"
-                    onError={(e) => {
-                      console.error('Error loading image in component:', e);
-                      const target = e.target as HTMLImageElement;
-                      // Only try fallback if it's a URL (not base64)
-                      if (target.src.includes('mypinata.cloud')) {
-                        const ipfsHash = target.src.split('/ipfs/')[1];
-                        target.src = `https://ipfs.io/ipfs/${ipfsHash}`;
-                      }
-                    }}
                   />
                   <button
                     onClick={handleRemoveImage}
-                    className="absolute top-4 right-4 px-4 py-2 bg-[#121212]/80 backdrop-blur-sm text-white rounded-full font-['Poppins'] hover:bg-[#121212] transition-colors"
+                    className="absolute top-4 right-4 px-4 py-2 bg-[#FFFBEA]/80 backdrop-blur-sm text-[#131315] rounded-full font-urbanist hover:bg-[#FFFBEA] transition-colors border border-[#9C9C9C]"
                   >
                     Remove
                   </button>
                 </div>
               )}
-
-              {variations.length > 0 && renderVariations()}
             </div>
 
             {/* Right Column - Form Fields */}
@@ -810,16 +833,16 @@ function CreateMeme() {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                placeholder="title of your meme"
-                className="w-full px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-full border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
+                placeholder="Title of your meme"
+                className="w-full px-6 py-4 bg-[#FFFBEA] text-[#131315] placeholder-[#131315]/40 rounded-full border border-[#9C9C9C] focus:border-[#EE5A0E] focus:outline-none font-urbanist"
               />
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="description of your meme"
+                placeholder="Description of your meme"
                 rows={4}
-                className="w-full px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-2xl border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
+                className="w-full px-6 py-4 bg-[#FFFBEA] text-[#131315] placeholder-[#131315]/40 rounded-2xl border border-[#9C9C9C] focus:border-[#EE5A0E] focus:outline-none font-urbanist"
               />
 
               <input
@@ -827,17 +850,17 @@ function CreateMeme() {
                 name="socialLinks"
                 value={formData.socialLinks}
                 onChange={handleInputChange}
-                placeholder="your social link (x.com)"
-                className="w-full px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-2xl border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
+                placeholder="Your social link (x.com)"
+                className="w-full px-6 py-4 bg-[#FFFBEA] text-[#131315] placeholder-[#131315]/40 rounded-2xl border border-[#9C9C9C] focus:border-[#EE5A0E] focus:outline-none font-urbanist"
               />
 
               <select
                 name="networkId"
                 value={formData.networkId}
                 onChange={handleInputChange}
-                className="w-full px-6 py-4 bg-[#1A1A1A] text-white/60 rounded-full border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins'] appearance-none"
+                className="w-full px-6 py-4 bg-[#FFFBEA] text-[#131315]/60 rounded-full border border-[#9C9C9C] focus:border-[#EE5A0E] focus:outline-none font-urbanist appearance-none"
               >
-                <option value="84532">select network</option>
+                <option value="84532">Select network</option>
                 <option value="84532">Base Sepolia</option>
               </select>
 
@@ -852,15 +875,15 @@ function CreateMeme() {
                   />
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                     acceptRoyalty 
-                      ? 'border-[#FFD700] bg-[#FFD700]' 
-                      : 'border-[#FFD700]/20 bg-transparent'
+                      ? 'border-[#EE5A0E] bg-[#EE5A0E]' 
+                      : 'border-[#9C9C9C] bg-transparent'
                   }`}>
                     {acceptRoyalty && (
-                      <div className="w-3 h-3 rounded-full bg-[#121212]" />
+                      <div className="w-3 h-3 rounded-full bg-white" />
                     )}
                   </div>
                 </div>
-                <label htmlFor="royalty" className="text-white/60 font-['Poppins']">
+                <label htmlFor="royalty" className="text-[#131315]/60 font-urbanist">
                   I confirm that I accept the 3% royalty fee.
                 </label>
               </div>
@@ -868,13 +891,13 @@ function CreateMeme() {
               <button
                 onClick={authenticated ? handleNext : login}
                 disabled={!acceptRoyalty || (!imageFile && !formData.fileId) || !formData.title}
-                className={`w-full px-6 py-4 rounded-full font-['Poppins'] font-medium transition-all ${
+                className={`w-full px-6 py-4 rounded-full font-urbanist font-medium transition-all ${
                   !acceptRoyalty || (!imageFile && !formData.fileId) || !formData.title
-                    ? 'bg-[#1A1A1A]/50 text-white/60'
-                    : 'bg-[#FFD700] text-[#121212] hover:bg-[#FFD700]/90'
+                    ? 'bg-[#9C9C9C]/50 text-[#131315]/60'
+                    : 'bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white hover:opacity-90'
                 }`}
               >
-                {authenticated ? 'next: submit meme →' : 'connect wallet to continue →'}
+                {authenticated ? 'NEXT: SUBMIT MEME →' : 'CONNECT WALLET TO CONTINUE →'}
               </button>
             </div>
           </div>
@@ -897,8 +920,8 @@ function CreateMeme() {
               </div>
             ) : submissionSuccess ? (
               <div className="text-center">
-                <div className="w-16 h-16 mb-6">
-                  <svg className="w-full h-full text-[#FFD700]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <div className="w-16 h-16 mb-6 mx-auto">
+                  <svg className="w-full h-full text-[#EE5A0E]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
@@ -909,22 +932,22 @@ function CreateMeme() {
                 <div className="flex gap-4">
                   <Link
                     to="/explore"
-                    className="px-8 py-4 bg-[#FFD700] text-[#121212] rounded-full font-['Poppins'] font-medium hover:bg-[#FFD700]/90 transition-all"
+                    className="px-8 py-4 bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white rounded-full font-['Poppins'] font-medium hover:opacity-90 transition-all"
                   >
-                    discover memes →
+                    DISCOVER MEMES →
                   </Link>
                   <Link
                     to="/"
-                    className="px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-['Poppins'] font-medium hover:bg-[#1A1A1A]/80 transition-all"
+                    className="px-8 py-4 bg-[#FFFBEA] text-[#131315] rounded-full font-['Poppins'] font-medium border border-[#9C9C9C] hover:border-[#EE5A0E] hover:text-[#EE5A0E] transition-all"
                   >
-                    back to home
+                    BACK TO HOME
                   </Link>
                 </div>
               </div>
             ) : isUploading ? (
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-6">
-                  <svg className="animate-spin w-full h-full text-[#FFD700]" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-full h-full text-[#EE5A0E]" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -944,15 +967,15 @@ function CreateMeme() {
                 <div className="flex gap-4">
                   <button
                     onClick={handlePrevious}
-                    className="px-8 py-4 bg-[#1A1A1A] text-white rounded-full font-['Poppins'] font-medium hover:bg-[#1A1A1A]/80 transition-all"
+                    className="px-8 py-4 bg-[#FFFBEA] text-[#131315] rounded-full font-urbanist font-medium border border-[#9C9C9C] hover:border-[#EE5A0E] hover:text-[#EE5A0E] transition-all"
                   >
-                    ← previous
+                    ← PREVIOUS
                   </button>
                   <button
                     onClick={submitMeme}
-                    className="px-8 py-4 bg-[#FFD700] text-[#121212] rounded-full font-['Poppins'] font-medium hover:bg-[#FFD700]/90 transition-all"
+                    className="px-8 py-4 bg-gradient-to-r from-[#EE5A0E] to-[#0F62FE] text-white rounded-full font-urbanist font-medium hover:opacity-90 transition-all"
                   >
-                    submit meme
+                    SUBMIT MEME
                   </button>
                 </div>
               </div>
