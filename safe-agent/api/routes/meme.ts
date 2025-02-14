@@ -5,6 +5,7 @@ import { FileverseService } from '../../core/fileverse';
 import { SocialEngagementService } from '../../core/social-engagement';
 import { type MemeContent } from '../../core/types';
 import { ethers } from 'ethers';
+import { announceMemeOnTwitter } from '../../core/twitter-agent';
 // Import ABI from frontend
 const ArtixMemeContestABI = require('../../../frontend/src/abi/ArtixMemeContest.json');
 
@@ -293,6 +294,22 @@ router.post('/register', async (req: Request, res: Response) => {
 
         // Register with Story Protocol
         const registration = await storyProtocol.mintAndRegisterMeme(memeContent);
+
+        // Announce on Twitter after successful registration
+        try {
+            await announceMemeOnTwitter({
+                title,
+                description,
+                creator,
+                ipId: registration.ipId,
+                txHash: registration.txHash,
+                imageUrl
+            });
+            console.log('Meme announced on Twitter successfully');
+        } catch (announcementError) {
+            console.warn('Failed to announce on Twitter, but registration was successful:', announcementError);
+            // Don't fail the registration if announcement fails
+        }
 
         res.json({
             success: true,
