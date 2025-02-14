@@ -960,8 +960,8 @@ function CreateMeme() {
               </div>
             ) : (
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-4 font-['Poppins']">Ready to Submit</h2>
-                <p className="text-white/60 mb-8 font-['Poppins'] max-w-sm">
+                <h2 className="text-2xl font-bold text-black mb-4 font-['Poppins']">Ready to Submit</h2>
+                <p className="text-black/90 mb-8 font-['Poppins'] max-w-sm">
                   Your meme is ready to be submitted to the blockchain
                 </p>
                 <div className="flex gap-4">
