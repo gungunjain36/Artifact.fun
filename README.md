@@ -19,7 +19,7 @@
 	<img src="https://github.com/user-attachments/assets/5290e8bd-ca74-4808-9339-0978a03ce65b" width="100" height="100">
 <a><a><a href="https://github.com/gungunjain36/Artifact.fun/tree/main?tab=readme-ov-file#story-protocol" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/90a235c7-8460-4ee3-9915-ae4bcf36a523" width="100" height="100">
-<a><a><a href="https://github.com/gungunjain36/Artifact.fun/tree/main?tab=readme-ov-file#elizaos" height="5" width="10" target="_blank">
+<a><a><a href="https://github.com/gungunjain36/Artifact.fun/tree/main?tab=readme-ov-file#Eliza (Twitter Integration)" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/9155c079-210e-46d0-bb11-865e2e90f68e" width="100" height="100">
 <a><a><a href="https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/venice-ai.ts" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/f1b38dc8-fa5b-4ae3-bbcd-9cfb7fbfdc5d" width="100" height="100">
