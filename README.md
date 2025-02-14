@@ -13,7 +13,7 @@
 <h2 align="center">Sponsor</h2>
 
 <p align="center">
-<a href="https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/safe-account-manager.ts" height="5" width="10" target="_blank">
+<a href="https://github.com/gungunjain36/Artifact.fun/tree/main?tab=readme-ov-file#safe-protocol" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/d4c646f1-8189-4c3a-9ef3-875889db7705" width="100" height="100">
 <a><a href="https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/fileverse.js" height="5" width="10" target="_blank">
 	<img src="https://github.com/user-attachments/assets/5290e8bd-ca74-4808-9339-0978a03ce65b" width="100" height="100">
