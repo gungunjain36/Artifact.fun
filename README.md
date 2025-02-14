@@ -115,14 +115,14 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 
 ## Sponsor
 
-[Safe Protocol](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/safe-account-manager.ts)
+### [Safe Protocol](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/safe-account-manager.ts)
 - Account abstraction for secure meme management
 - Smart account creation for each user
 - Gasless transactions using Pimlico paymaster
 - Multi-sig functionality for enhanced security
 - Safe SDK integration for transaction management
 
-[Story Protocol](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/story-protocol.ts)
+### [Story Protocol](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/story-protocol.ts)
 > https://aeneid.explorer.story.foundation/collections/0xEbE7F3D750757c0f26432CA40e178c1d10A93fe2
 - IP registration for all memes
 - Derivative meme licensing and tracking
@@ -131,7 +131,7 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - Integration with SPG NFT contracts
 - IP metadata storage and verification
 
-[Fileverse](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/fileverse.js)
+### [Fileverse](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/fileverse.js)
 
 ![image](https://github.com/user-attachments/assets/7ba79acc-38ed-4a40-b3b2-44e29cffcafc)
 
@@ -141,20 +141,20 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - Portal-based file access control
 - Secure file upload and retrieval system
 
-[Venice AI](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/venice-ai.ts)
+### [Venice AI](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/venice-ai.ts)
 - AI-powered meme generation
 - Marketing content generation
 - Social media copy creation
 - Chat completions for natural announcements
 - Dynamic prompt engineering
 
-[Eliza (Twitter Integration)](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/twitter-agent.ts)
+### [Eliza (Twitter Integration)](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/twitter-agent.ts)
 - Automated social media announcements
 - Twitter scraper for posting updates
 - Engagement tracking and management
 - 2FA-secured posting system
 
-**AWS** 
+### AWS
 - Scalable backend deployment
 - API Gateway for endpoint management
 
