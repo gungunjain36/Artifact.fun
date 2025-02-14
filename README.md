@@ -3,7 +3,7 @@
 <h3 align="center">Web3 <code>Meme Trendsetter</code> Platform.</h3>
 
 <p align="center">
-  <a href="" style="color: #a77dff">Artifact.fun</a> | <a href="" style="color: #a77dff">Demo Video</a> | <a href="https://www.figma.com/deck/QpMfoTAiLRtI59oGpOcgod/Artifact.fun?node-id=2055-14462&viewport=-94%2C-73%2C0.54&t=WpZAZnz2neSguwMj-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1" style="color: #a77dff">Pitchdeck</a>
+  <a href="" style="color: #a77dff">Artifact.fun</a> | <a href="" style="color: #a77dff">Demo Video</a> | <a href="https://www.figma.com/deck/QpMfoTAiLRtI59oGpOcgod/Artifact.fun?node-id=2045-14316&viewport=-94%2C-73%2C0.54&t=Cyc1KDX6qI9JNtL9-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1" style="color: #a77dff">Pitchdeck</a>
 </p>
 
 <p align="center">
