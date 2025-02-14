@@ -10,7 +10,7 @@
   <a href="" style="color: #a77dff">Contract</a> | <a href="" style="color: #a77dff">AI agent Contract</a>
 </p>
 
-<h2 align="center">Sponsor</h2>
+<h2 align="center">Sponsor (Click on the logo)</h2>
 
 <p align="center">
 <a href="https://github.com/gungunjain36/Artifact.fun/tree/main?tab=readme-ov-file#safe-protocol" height="5" width="10" target="_blank">
