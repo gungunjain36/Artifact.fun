@@ -113,6 +113,47 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - Users earn **ranking NFTs** based on their activity (voting, creating memes, and participating in auctions).  
 - Ranking NFTs provide **exclusive benefits** within the Artifact.fun platform.
 
+## Sponsor
+
+Safe Protocol
+- Account abstraction for secure meme management
+- Smart account creation for each user
+- Gasless transactions using Pimlico paymaster
+- Multi-sig functionality for enhanced security
+- Safe SDK integration for transaction management
+
+Story Protocol
+- IP registration for all memes
+- Derivative meme licensing and tracking
+- Royalty management system
+- On-chain attribution and provenance
+- Integration with SPG NFT contracts
+- IP metadata storage and verification
+
+Fileverse
+- Decentralized storage for meme content
+- IPFS integration for metadata
+- Namespace management for meme organization
+- Portal-based file access control
+- Secure file upload and retrieval system
+
+Venice AI
+- AI-powered meme generation
+- Marketing content generation
+- Social media copy creation
+- Chat completions for natural announcements
+- Dynamic prompt engineering
+
+Eliza (Twitter Integration)
+- Automated social media announcements
+- Twitter scraper for posting updates
+- Engagement tracking and management
+- 2FA-secured posting system
+
+AWS 
+- Scalable backend deployment
+- API Gateway for endpoint management
+
 ## Business Model
 
 **1️⃣ Gas Fees from On-Chain Voting**
