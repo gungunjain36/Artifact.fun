@@ -2,22 +2,36 @@ import { SafeIntegration } from '../safe-integration';
 import { StoryProtocolService } from '../story-protocol';
 import { FileverseService } from '../fileverse';
 import { MemeAgent } from '../meme-agent';
-import { MemeCreationFlow } from '../meme-creation-flow';
-import { MemeNFTManager } from '../nft-manager';
+import { VeniceAIService } from '../venice-ai';
+import { SocialEngagementService } from '../social-engagement';
+import { AgentService } from './agent-service';
+import { type MemeContent, type TrendData } from '../types';
+import { ethers } from 'ethers';
 
 export class CoreServices {
-    private safeIntegration: SafeIntegration;
-    private storyProtocol: StoryProtocolService;
-    private fileverse: FileverseService;
-    private memeAgent: MemeAgent;
+    private safeIntegration!: SafeIntegration;
+    private storyProtocol!: StoryProtocolService;
+    private fileverse!: FileverseService;
+    private memeAgent!: MemeAgent;
+    private veniceAI!: VeniceAIService;
+    private socialEngagement!: SocialEngagementService;
+    private agentService!: AgentService;
+    private provider!: ethers.JsonRpcProvider;
 
     constructor() {
-        this.initialize();
+        this.initialize().catch(error => {
+            console.error('Failed to initialize core services:', error);
+            throw error;
+        });
     }
 
     private async initialize() {
         try {
             console.log('Initializing core services...');
+
+            // Initialize provider
+            this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+            const signer = new ethers.Wallet(process.env.ADMIN_PRIVATE_KEY!, this.provider);
 
             // Initialize Safe Integration
             this.safeIntegration = new SafeIntegration();
@@ -27,8 +41,28 @@ export class CoreServices {
             this.fileverse = new FileverseService();
             await this.fileverse.initialize();
 
+            // Initialize Venice AI
+            this.veniceAI = new VeniceAIService({
+                apiKey: process.env.VENICE_API_KEY!
+            });
+
+            // Initialize Story Protocol
+            this.storyProtocol = new StoryProtocolService(process.env.ADMIN_PRIVATE_KEY!);
+
+            // Initialize Social Engagement (simplified version)
+            this.socialEngagement = new SocialEngagementService(
+                process.env.ADMIN_PRIVATE_KEY!,
+                process.env.PIMLICO_API_KEY!
+            );
+
+            // Initialize Agent Service
+            this.agentService = new AgentService();
+
             // Initialize Meme Agent
-            this.memeAgent = new MemeAgent(this.safeIntegration);
+            this.memeAgent = new MemeAgent(
+                this.provider,
+                signer
+            );
 
             console.log('Core services initialized successfully');
         } catch (error) {
@@ -37,36 +71,72 @@ export class CoreServices {
         }
     }
 
-    // Safe Integration Methods
-    async executeSafeTransaction(transaction: any) {
-        return await this.safeIntegration.executeTransaction(transaction);
+    // Meme Creation Methods
+    async createMeme(prompt: string, safeAddress: string) {
+        try {
+            // Generate meme using Venice AI
+            const { imageUrl } = await this.veniceAI.generateMeme(prompt);
+
+            // Prepare meme content
+            const meme: MemeContent = {
+                title: prompt,
+                description: `AI-generated meme: ${prompt}`,
+                creator: safeAddress,
+                imageUrl,
+                metadata: {
+                    tags: ['ai-generated', 'web3'],
+                    category: 'AI Generated',
+                    aiGenerated: true
+                }
+            };
+
+            // Register with Story Protocol
+            const registration = await this.storyProtocol.mintAndRegisterMeme(meme);
+            
+            // Store metadata in Fileverse
+            const file = await this.fileverse.storeMemeMetadata(meme);
+
+            // Promote on social media if registration successful
+            if (registration.ipId && imageUrl) {
+                await this.socialEngagement.promoteMemeOnTwitter(
+                    registration.ipId,
+                    imageUrl,
+                    prompt
+                );
+            }
+
+            return {
+                registration,
+                file,
+                meme
+            };
+        } catch (error) {
+            console.error('Failed to create meme:', error);
+            throw error;
+        }
     }
 
-    // Story Protocol Methods
-    async createMeme(meme: any) {
-        const registration = await this.safeIntegration.createMeme(meme);
+    async createDerivativeMeme(meme: MemeContent, parentIpId: string, licenseTermsId: string) {
+        const registration = await this.storyProtocol.registerMemeAsDerivative(
+            meme,
+            process.env.SPG_NFT_CONTRACT_ADDRESS!,
+            parentIpId,
+            licenseTermsId
+        );
         
-        // Store metadata in Fileverse
-        const metadata = await this.fileverse.storeMemeMetadata(meme);
-        
-        return {
-            registration,
-            metadata
-        };
-    }
-
-    async createDerivativeMeme(meme: any, parentIpId: string, licenseTermsId: string) {
-        const registration = await this.safeIntegration.createDerivativeMeme(meme, parentIpId, licenseTermsId);
-        
-        // Store metadata in Fileverse
-        const metadata = await this.fileverse.storeMemeMetadata({
+        // Store metadata in Fileverse with derivative info in a separate field
+        const metadataWithDerivative = {
             ...meme,
             metadata: {
                 ...meme.metadata,
-                parentIpId,
-                licenseTermsId
+                derivativeInfo: {
+                    parentIpId,
+                    licenseTermsId
+                }
             }
-        });
+        };
+        
+        const metadata = await this.fileverse.storeMemeMetadata(metadataWithDerivative);
         
         return {
             registration,
@@ -74,20 +144,30 @@ export class CoreServices {
         };
     }
 
+    // Trend Handling Methods
+    async handleTrendingMeme(trend: TrendData) {
+        return await this.memeAgent.handleMemeCreation(trend);
+    }
+
+    async handleDerivativeTrend(trend: TrendData, parentIpId: string, licenseTermsId: string) {
+        return await this.memeAgent.handleDerivativeMeme(trend, parentIpId, licenseTermsId);
+    }
+
+    // Royalty Methods
     async payRoyalties(memeId: string, amount: number) {
-        return await this.safeIntegration.payRoyalties(memeId, amount);
+        return await this.storyProtocol.payRoyalty(memeId, amount);
     }
 
     async claimRoyalties(memeId: string) {
-        return await this.safeIntegration.claimRoyalties(memeId);
+        return await this.storyProtocol.claimRevenue(memeId);
     }
 
-    // Fileverse Methods
+    // Metadata Methods
     async getMemeMetadata(fileId: string) {
         return await this.fileverse.getMemeMetadata(fileId);
     }
 
-    async updateMemeMetadata(fileId: string, meme: any) {
+    async updateMemeMetadata(fileId: string, meme: MemeContent) {
         return await this.fileverse.updateMemeMetadata(fileId, meme);
     }
 
@@ -95,13 +175,13 @@ export class CoreServices {
         return await this.fileverse.deleteMemeMetadata(fileId);
     }
 
-    // Meme Agent Methods
-    async handleTrendingMeme(trend: any) {
-        return await this.memeAgent.handleMemeCreation(trend);
+    // Agent Methods
+    async getCurrentAllowance() {
+        return await this.agentService.getCurrentAllowance();
     }
 
-    async handleDerivativeTrend(trend: any, parentIpId: string, licenseTermsId: string) {
-        return await this.memeAgent.handleDerivativeMeme(trend, parentIpId, licenseTermsId);
+    async spendAllowance(amount: bigint) {
+        return await this.agentService.spendAllowance(amount);
     }
 
     // Service Getters
@@ -119,5 +199,17 @@ export class CoreServices {
 
     getMemeAgent() {
         return this.memeAgent;
+    }
+
+    getVeniceAI() {
+        return this.veniceAI;
+    }
+
+    getSocialEngagement() {
+        return this.socialEngagement;
+    }
+
+    getAgentService() {
+        return this.agentService;
     }
 } 

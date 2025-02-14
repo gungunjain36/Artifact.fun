@@ -47,12 +47,21 @@ export class AgentService {
     }
 
     async getCurrentAllowance(): Promise<any> {
-        return await this.publicClient.readContract({
+        const allowance = await this.publicClient.readContract({
             address: this.allowanceModuleAddress,
             abi: this.allowanceModule.abi,
             functionName: 'getTokenAllowance',
             args: [SAFE.SAFE_ADDRESS, AGENT.ADDRESS, zeroAddress]
         });
+
+        // Convert BigInt values to strings for JSON serialization
+        return {
+            amount: allowance[0].toString(),
+            spent: allowance[1].toString(),
+            resetTime: allowance[2].toString(),
+            lastResetTime: allowance[3].toString(),
+            nonce: allowance[4].toString()
+        };
     }
 
     async spendAllowance(amount: bigint): Promise<Hash> {

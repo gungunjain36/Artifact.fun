@@ -9,7 +9,7 @@ dotenv.config()
 const SIGNER_ADDRESS = process.env.SIGNER_ADDRESS
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY
 const SAFE_ADDRESS = process.env.SAFE_ADDRESS
-const RPC_URL = 'https://rpc.ankr.com/eth_sepolia'
+const RPC_URL = process.env.RPC_URL!
 const AGENT_ADDRESS = '0x8880bfd0a9c311A92E1Be07330153721E4402700'
 const ETH_ADDRESS = '0x0000000000000000000000000000000000000000' // ETH token address
 const DAILY_LIMIT = 0.001 // 0.001 ETH daily limit as specified
