@@ -41,18 +41,30 @@ export class MemeAgent {
         this.signer = signer;
 
         // Load contract ABIs
-        const contestAbi = require('../../safe-agent/abi/ArtixMemeContest.json');
-        const rankingAbi = require('../../safe-agent/abi/ArtifactRanking.json');
+        const contestAbi = require('../../frontend/src/abi/ArtixMemeContest.json');
+        const rankingAbi = require('../../frontend/src/abi/ArtifactRanking.json');
+
+        // Check if contract addresses are available
+        const contestAddress = process.env.ARTIX_CONTRACT_ADDRESS;
+        const rankingAddress = process.env.RANKING_NFT_CONTRACT_ADDRESS;
+
+        if (!contestAddress) {
+            throw new Error('ARTIX_CONTRACT_ADDRESS environment variable is not set');
+        }
+
+        if (!rankingAddress) {
+            throw new Error('RANKING_NFT_CONTRACT_ADDRESS environment variable is not set');
+        }
 
         // Initialize smart contracts
         this.contestContract = new ethers.Contract(
-            process.env.CONTEST_CONTRACT_ADDRESS!,
+            contestAddress,
             contestAbi,
             signer
         );
 
         this.rankingContract = new ethers.Contract(
-            process.env.RANKING_NFT_CONTRACT_ADDRESS!,
+            rankingAddress,
             rankingAbi,
             signer
         );

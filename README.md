@@ -121,3 +121,8 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 **3️⃣ Ranking NFT Minting Fees**
 - Users pay a fee when **minting their own ranking NFTs** using accumulated points.
 - Ranking NFTs **enhance credibility and influence** within the community.
+
+
+## Story Protocol
+
+https://aeneid.explorer.story.foundation/ipa/0x0ecf60Ca48D07cbF40d25E99B3544FE783395178

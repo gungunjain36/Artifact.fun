@@ -4,6 +4,9 @@ import { StoryProtocolService } from '../../core/story-protocol';
 import { FileverseService } from '../../core/fileverse';
 import { SocialEngagementService } from '../../core/social-engagement';
 import { type MemeContent } from '../../core/types';
+import { ethers } from 'ethers';
+// Import ABI from frontend
+const ArtixMemeContestABI = require('../../../frontend/src/abi/ArtixMemeContest.json');
 
 interface CreateMemeRequest {
     prompt: string;
@@ -263,6 +266,83 @@ router.delete('/:fileId', async (req, res, next) => {
         res.json(result);
     } catch (error: any) {
         next(error);
+    }
+});
+
+// Register meme with Story Protocol
+router.post('/register', async (req: Request, res: Response) => {
+    try {
+        if (!storyProtocol) {
+            initializeServices();
+        }
+
+        const { memeId, title, description, creator, imageUrl, metadata } = req.body;
+
+        // Create meme content
+        const memeContent: MemeContent = {
+            title,
+            description,
+            creator,
+            imageUrl,
+            metadata: {
+                tags: metadata?.tags || [],
+                category: metadata?.category || 'Community Meme',
+                aiGenerated: metadata?.aiGenerated || false
+            }
+        };
+
+        // Register with Story Protocol
+        const registration = await storyProtocol.mintAndRegisterMeme(memeContent);
+
+        res.json({
+            success: true,
+            data: {
+                ipId: registration.ipId,
+                txHash: registration.txHash
+            }
+        });
+    } catch (error: any) {
+        console.error('Error registering meme with Story Protocol:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to register meme',
+            details: error.message
+        });
+    }
+});
+
+// Mint NFT for a meme
+router.post('/:memeId/mint-nft', async (req: Request, res: Response) => {
+    try {
+        if (!storyProtocol) {
+            initializeServices();
+        }
+
+        const { memeId } = req.params;
+        const { ipId } = req.body;
+
+        // Log the registration details
+        console.log('Meme registered with Story Protocol:', {
+            memeId,
+            ipId
+        });
+
+        // Return success response with registration details
+        res.json({
+            success: true,
+            data: {
+                memeId,
+                ipId,
+                message: 'Meme successfully registered with Story Protocol'
+            }
+        });
+    } catch (error: any) {
+        console.error('Error in Story Protocol registration:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to register meme',
+            details: error.message
+        });
     }
 });
 

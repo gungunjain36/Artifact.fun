@@ -101,6 +101,59 @@ const MEME_STYLES: MemeStyle[] = [
   }
 ];
 
+const STATUS_MESSAGES = {
+  pending: { text: 'Registering with Story Protocol...', icon: 'pending' },
+  submitting: { text: 'Submitting meme...', icon: 'submitting' },
+  success: { text: 'Successfully registered!', icon: 'success' },
+  error: { text: 'Registration failed', icon: 'error' }
+} as const;
+
+type IpRegistrationStatus = keyof typeof STATUS_MESSAGES | null;
+
+interface SubmitEvent {
+  fragment?: {
+    name: string;
+  };
+  args: {
+    memeId: string;
+  };
+}
+
+// Add to existing types at the top
+interface UploadError extends Error {
+  response?: {
+    data: any;
+    status: number;
+  };
+}
+
+interface MemeMetadata {
+  aiGenerated: boolean;
+  prompt: string;
+  tags: string[];
+}
+
+interface MemeData {
+  title: string;
+  description: string;
+  imageHash: string;
+  creator: string;
+  timestamp: number;
+  votes: number;
+  style: string;
+  metadata: MemeMetadata;
+}
+
+// Add this interface near the top with other interfaces
+interface TransactionLog {
+  fragment?: {
+    name: string;
+  };
+  args: {
+    memeId: ethers.BigNumber;
+  };
+}
+
 function CreateMeme() {
   const { login, authenticated } = usePrivy();
   const { wallets } = useWallets();
@@ -123,7 +176,7 @@ function CreateMeme() {
   const [selectedStyle, setSelectedStyle] = useState<'Classic Meme' | 'Dank Meme' | 'Wholesome'>('Classic Meme');
   const [variations, setVariations] = useState<string[]>([]);
   const [selectedVariation, setSelectedVariation] = useState<number>(0);
-  const [ipRegistrationStatus, setIpRegistrationStatus] = useState<'pending' | 'success' | 'error' | null>(null);
+  const [ipRegistrationStatus, setIpRegistrationStatus] = useState<IpRegistrationStatus>(null);
   const [generationHistory, setGenerationHistory] = useState<AIGenerationResult[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [enhancedPrompt, setEnhancedPrompt] = useState<string>('');
@@ -152,40 +205,37 @@ function CreateMeme() {
   };
 
   const uploadToPinata = async (file: File): Promise<string> => {
+    console.log('Starting upload to Pinata...');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers = {
+      'Content-Type': 'multipart/form-data',
+      'pinata_api_key': import.meta.env.VITE_PINATA_API_KEY!,
+      'pinata_secret_api_key': import.meta.env.VITE_PINATA_SECRET_KEY!
+    };
+
     try {
-      console.log('Starting upload to Pinata...');
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Log headers (without showing full credentials)
-      console.log('Upload headers check:', {
-        hasApiKey: !!PINATA_API_KEY,
-        hasSecretKey: !!PINATA_SECRET_KEY,
-        contentType: 'multipart/form-data'
-      });
-
-      // Upload to Pinata
-      const res = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
-        headers: {
-          'Content-Type': `multipart/form-data`,
-          'pinata_api_key': PINATA_API_KEY,
-          'pinata_secret_api_key': PINATA_SECRET_KEY
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        formData,
+        { 
+          headers,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity
         }
-      });
+      );
 
-      // Return the IPFS hash
-      const ipfsHash = `ipfs://${res.data.IpfsHash}`;
-      console.log('Upload successful. IPFS Hash:', ipfsHash);
-      return ipfsHash;
+      console.log('Upload successful. IPFS Hash:', response.data.IpfsHash);
+      return response.data.IpfsHash;
     } catch (error: any) {
       console.error('Detailed upload error:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
       });
-      throw new Error(`Failed to upload image to IPFS: ${error.response?.data?.message || error.message}`);
+      throw new Error(`Failed to upload image to IPFS: ${error.message}`);
     }
   };
 
@@ -306,138 +356,93 @@ function CreateMeme() {
   };
 
   const submitMeme = async () => {
-    if (!authenticated || !wallets?.[0]) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    if (!formData.fileId && !imageFile) {
-      alert('Please generate or upload a meme first');
-      return;
-    }
-
     try {
-      setIsUploading(true);
-      setIpRegistrationStatus('pending');
-      setSubmissionLogs([]); // Clear previous logs
-      
-      const wallet = wallets[0];
-      const userAddress = wallet.address;
-
-      // If we have a manual upload, store it in Fileverse first
-      let fileId = formData.fileId;
-      if (!fileId && imageFile) {
-        addLog('📤 Uploading image to Fileverse...');
-        const formData = new FormData();
-        formData.append('file', imageFile);
-        const uploadResponse = await fetch(API_ENDPOINTS.UPLOAD_FILE, {
-          method: 'POST',
-          body: formData
-        });
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload image');
-        }
-        const uploadData = await uploadResponse.json();
-        fileId = uploadData.fileId;
-        addLog('✅ Image uploaded successfully!');
+      if (!wallets?.[0]?.address || !imageFile) {
+        console.error('No wallet connected or no image selected');
+        return;
       }
-      
-      const submitData = {
-        userAddress,
-        title: formData.title,
-        description: formData.description,
-        socialLinks: formData.socialLinks,
-        networkId: formData.networkId,
-        fileId,
-        registerIP: true,
-        metadata: {
-          aiGenerated: uploadMethod === 'ai',
-          style: selectedStyle,
-          prompt: aiPrompt,
-          tags: formData.title.toLowerCase().split(' ')
+
+      addLog('Starting meme submission process...');
+
+      // 1. First upload image to IPFS via Pinata
+      addLog('Uploading image to IPFS via Pinata...');
+      const pinataFormData = new FormData();
+      pinataFormData.append('file', imageFile);
+
+      const pinataResponse = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        pinataFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'pinata_api_key': PINATA_API_KEY,
+            'pinata_secret_api_key': PINATA_SECRET_KEY
+          },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity
         }
-      };
+      );
 
-      addLog('🔄 Preparing Story Protocol registration...');
-      console.log('Submission data:', submitData);
+      console.log('Pinata upload response:', pinataResponse.data);
+      const ipfsHash = pinataResponse.data.IpfsHash;
+      addLog(`Image uploaded to IPFS with hash: ${ipfsHash}`);
 
-      // Submit meme with Story Protocol registration
-      const response = await fetch(API_ENDPOINTS.SUBMIT_MEME, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(submitData)
+      // 2. Get provider and create contract instance
+      addLog('Connecting to wallet and contract...');
+      const provider = await wallets?.[0]?.getEthereumProvider();
+      await switchToBaseSepolia(provider);
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      
+      const contract = new ethers.Contract(
+        ARTIX_CONTRACT_ADDRESS,
+        ArtixMemeContestABI,
+        signer
+      );
+
+      console.log('Contract setup complete:', {
+        address: ARTIX_CONTRACT_ADDRESS,
+        signer: signer.address
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.error || 
-          errorData?.details || 
-          `Server error: ${response.status}`
-        );
+      // 3. Submit meme to blockchain
+      addLog('Submitting meme to blockchain...');
+      const tx = await contract.submitMeme(
+        ipfsHash,
+        formData.title,
+        formData.description,
+        formData.socialLinks || '',
+        formData.networkId
+      );
+
+      console.log('Transaction sent:', tx.hash);
+      addLog(`Transaction sent: ${tx.hash}`);
+
+      // 4. Wait for transaction confirmation
+      addLog('Waiting for transaction confirmation...');
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed:', receipt);
+
+      // 5. Get meme ID from event logs
+      const submitEvent = receipt.logs.find(
+        (log: TransactionLog) => log.fragment?.name === 'MemeSubmitted'
+      );
+
+      if (submitEvent) {
+        const memeId = submitEvent.args.memeId;
+        console.log('Meme submitted successfully! Meme ID:', memeId.toString());
+        addLog(`Meme submitted successfully! Meme ID: ${memeId}`);
+        setSubmissionSuccess(true);
       }
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to submit meme');
+    } catch (error) {
+      console.error('Error submitting meme:', error);
+      addLog(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        console.error('Detailed error:', error.response.data);
+        addLog(`Detailed error: ${JSON.stringify(error.response.data)}`);
       }
-
-      console.log('Meme submitted successfully:', data);
-      
-      // Handle pending registration status
-      if (data.meme?.registration?.status === 'pending') {
-        addLog('📝 Transaction submitted to blockchain!');
-        addLog(`🔗 Transaction Hash: ${data.meme.registration.txHash}`);
-        addLog('⏳ Waiting for blockchain confirmation (this may take 3-5 minutes)...');
-        addLog(`🔍 Track progress: https://sepolia.basescan.org/tx/${data.meme.registration.txHash}`);
-        if (data.meme.registration.message) {
-          addLog(data.meme.registration.message);
-        }
-        setIpRegistrationStatus('pending');
-      } else if (data.meme?.registration?.ipId) {
-        addLog('🎉 Registration successful!');
-        addLog(`📋 IP ID: ${data.meme.registration.ipId}`);
-        addLog(`🔍 View on Story Protocol Explorer: https://explorer.story.foundation/ipa/${data.meme.registration.ipId}`);
-        setIpRegistrationStatus('success');
-      }
-      
-      setSubmissionSuccess(true);
-
-      // Clear form
-      setFormData({
-        title: '',
-        description: '',
-        socialLinks: '',
-        networkId: '84532',
-        fileId: ''
-      });
-      setImageFile(null);
-      setImagePreview(null);
-      setAiPrompt('');
-      setVariations([]);
-      setEnhancedPrompt('');
-
-    } catch (error: any) {
-      console.error('Detailed error:', error);
-      setIpRegistrationStatus('error');
-      addLog('❌ Error: ' + error.message);
-      
-      // Provide more specific error messages
-      if (error.message?.includes('Timed out')) {
-        addLog('⏳ Transaction submitted but confirmation is taking longer than expected.');
-        addLog('ℹ️ The registration should complete in a few minutes.');
-        addLog('🔄 You can check back later to see the final status.');
-        if (error.hash) {
-          addLog(`🔍 Track progress: https://sepolia.basescan.org/tx/${error.hash}`);
-        }
-      }
-      alert('Error submitting meme: ' + (error.message || 'Unknown error'));
-    } finally {
-      setIsUploading(false);
+      alert('Failed to submit meme: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -489,34 +494,19 @@ function CreateMeme() {
   const renderIPRegistrationStatus = () => {
     if (!ipRegistrationStatus) return null;
 
-    const statusConfig = {
-      pending: {
-        text: 'Registering IP on Story Protocol...',
-        icon: 'loading'
-      },
-      success: {
-        text: 'IP successfully registered!',
-        icon: 'check'
-      },
-      error: {
-        text: 'Failed to register IP',
-        icon: 'error'
-      }
-    };
-
-    const config = statusConfig[ipRegistrationStatus];
+    const config = STATUS_MESSAGES[ipRegistrationStatus];
 
     return (
       <div className={`flex items-center gap-2 mt-4 ${
         ipRegistrationStatus === 'error' ? 'text-red-500' : 'text-[#FFD700]'
       }`}>
-        {config.icon === 'loading' && (
+        {config.icon === 'pending' && (
           <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
         )}
-        {config.icon === 'check' && (
+        {config.icon === 'success' && (
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>

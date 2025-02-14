@@ -32,7 +32,7 @@ export function validateEnvironment() {
         'VENICE_API_KEY',
 
         // Contract Addresses
-        'CONTEST_CONTRACT_ADDRESS',
+        'ARTIX_CONTRACT_ADDRESS',
         'RANKING_NFT_CONTRACT_ADDRESS',
         'MEME_NFT_CONTRACT_ADDRESS',
 
@@ -64,7 +64,7 @@ export function validateEnvironment() {
         'SAFE_ADDRESS',
         'AGENT_ADDRESS',
         // 'SPG_NFT_CONTRACT_ADDRESS',
-        'CONTEST_CONTRACT_ADDRESS',
+        'ARTIX_CONTRACT_ADDRESS',
         'RANKING_NFT_CONTRACT_ADDRESS',
         'MEME_NFT_CONTRACT_ADDRESS'
     ];

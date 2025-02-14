@@ -30,7 +30,7 @@ export class CoreServices {
             console.log('Initializing core services...');
 
             // Initialize provider
-            this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+            this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://sepolia.base.org');
             const signer = new ethers.Wallet(process.env.ADMIN_PRIVATE_KEY!, this.provider);
 
             // Initialize Safe Integration
@@ -57,6 +57,15 @@ export class CoreServices {
 
             // Initialize Agent Service
             this.agentService = new AgentService();
+
+            // Ensure contract addresses are available before initializing MemeAgent
+            if (!process.env.ARTIX_CONTRACT_ADDRESS) {
+                throw new Error('ARTIX_CONTRACT_ADDRESS environment variable is not set');
+            }
+
+            if (!process.env.RANKING_NFT_CONTRACT_ADDRESS) {
+                throw new Error('RANKING_NFT_CONTRACT_ADDRESS environment variable is not set');
+            }
 
             // Initialize Meme Agent
             this.memeAgent = new MemeAgent(

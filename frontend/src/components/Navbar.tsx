@@ -12,9 +12,9 @@ const Navbar = () => {
   const [userDisplayName, setUserDisplayName] = useState<string>('');
   const [balance, setBalance] = useState<string>('0.00');
 
-  console.log('balance', balance);
-  console.log('user', user);
-  console.log('userDisplayName', userDisplayName);
+  // console.log('balance', balance);
+  // console.log('user', user);
+  // console.log('userDisplayName', userDisplayName);
 
   useEffect(() => {
     const fetchBalance = async () => {
