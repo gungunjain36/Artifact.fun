@@ -12,6 +12,7 @@ const ARTIX_CONTRACT_ADDRESS = import.meta.env.VITE_ARTIX_CONTRACT_ADDRESS;
 // const ARTIX_NFT_CONTRACT_ADDRESS = import.meta.env.VITE_ARTIX_NFT_CONTRACT_ADDRESS;
 const ARTIX_RANKING_CONTRACT_ADDRESS = import.meta.env.VITE_ARTIX_RANKING_CONTRACT_ADDRESS;
 const CDP_AGENT_URL = import.meta.env.VITE_CDP_AGENT_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Base Sepolia network parameters
 const BASE_SEPOLIA_PARAMS = {
@@ -25,6 +26,9 @@ const BASE_SEPOLIA_PARAMS = {
   rpcUrls: ['https://sepolia.base.org'],
   blockExplorerUrls: ['https://sepolia.basescan.org']
 };
+
+// Add at the top with other constants
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 interface Meme {
   id: number;
@@ -45,7 +49,7 @@ interface VotingConfig {
   maxVotes: number;
   contestDuration: number;
   minVotesForWin: number;
-  voteCost: ethers.BigNumber;
+  voteCost: bigint;
 }
 
 interface ConnectedWallet {
@@ -54,15 +58,30 @@ interface ConnectedWallet {
   getEthereumProvider: () => Promise<any>;
 }
 
-// interface Event {
-//   event: string;
-//   args: {
-//     tokenId: { toString: () => string };
-//     creator: string;
-//     tokenURI: string;
-//     network: number;
-//   };
-// }
+interface AuctionInfo {
+  id: string;
+  memeId: number;
+  startPrice: bigint;
+  currentPrice: bigint;
+  highestBidder: string;
+  endTime: number;
+  isActive: boolean;
+}
+
+// Update API endpoints
+const API_ENDPOINTS = {
+    GET_MEMES: `${API_URL}/memes`,
+    GET_MEME: (fileId: string) => `${API_URL}/memes/${fileId}`,
+    VOTE_MEME: (memeId: string) => `${API_URL}/memes/${memeId}/vote`,
+    CLAIM_ROYALTIES: (memeId: string) => `${API_URL}/memes/${memeId}/claim-royalties`,
+    MINT_NFT: (memeId: string) => `${API_URL}/memes/${memeId}/mint-nft`,
+    REGISTER_MEME: `${API_URL}/memes/register`,
+    AGENT_ALLOWANCE: `${API_URL}/agent/allowance`,
+    AGENT_SPEND: `${API_URL}/agent/spend`,
+    GET_AUCTION: `${API_URL}/auctions`,
+    CREATE_AUCTION: `${API_URL}/auctions`,
+    PLACE_BID: `${API_URL}/auctions/place-bid`
+};
 
 function ExploreMemes() {
   const { authenticated, login, user } = usePrivy();
@@ -79,9 +98,10 @@ function ExploreMemes() {
     data: Meme[];
     timestamp: number;
   } | null>(null);
-
-  // Cache duration in milliseconds (5 minutes)
-  const CACHE_DURATION = 5 * 60 * 1000;
+  const [auctions, setAuctions] = useState<{ [key: number]: AuctionInfo }>({});
+  const [bidAmount, setBidAmount] = useState<string>('');
+  const [activeBidMemeId, setActiveBidMemeId] = useState<number | null>(null);
+  const [auctionLoading, setAuctionLoading] = useState(false);
 
   // Get the authenticated wallet address
   const getAuthenticatedWallet = () => {
@@ -89,7 +109,7 @@ function ExploreMemes() {
 
     // First check if we have the user's authenticated wallet address
     const authWalletAddress = user.wallet.address;
-    console.log('Auth wallet address:', authWalletAddress);
+    // console.log('Auth wallet address:', authWalletAddress);
 
     // Find the matching wallet from wallets list
     const matchingWallet = wallets?.find(w => 
@@ -134,18 +154,18 @@ function ExploreMemes() {
     }
   };
 
-  const fetchVotingConfig = async (contract: ethers.Contract) => {
+  const fetchVotingConfig = async (contract: ethers.Contract): Promise<VotingConfig> => {
     try {
       const config = await contract.votingConfiguration();
-      setVotingConfig({
-        maxVotes: config.maxVotes.toNumber(),
-        contestDuration: config.contestDuration.toNumber(),
-        // minVotesForWin: config.minVotesForWin.toNumber(),
-        minVotesForWin: 2,
+      return {
+        maxVotes: Number(config.maxVotes),
+        contestDuration: Number(config.contestDuration),
+        minVotesForWin: 1,
         voteCost: config.voteCost
-      });
+      };
     } catch (err) {
       console.error('Error fetching voting config:', err);
+      throw err;
     }
   };
 
@@ -198,19 +218,14 @@ function ExploreMemes() {
     setFilteredMemes(filtered);
   }, [memes, searchQuery, activeFilter]);
 
-  // Modified fetchMemes to use cache
+  // Modified fetchMemes to get data from blockchain
   const fetchMemes = async () => {
     try {
-      // Check cache first
-      if (memesCache && (Date.now() - memesCache.timestamp) < CACHE_DURATION) {
-        setMemes(memesCache.data);
-        return;
-      }
-
+      // Remove cache check and always fetch fresh data
       setLoading(true);
       setError(null);
 
-      const provider = new ethers.providers.JsonRpcProvider(BASE_SEPOLIA_PARAMS.rpcUrls[0]);
+      const provider = new ethers.JsonRpcProvider(BASE_SEPOLIA_PARAMS.rpcUrls[0]);
       const contract = new ethers.Contract(
         ARTIX_CONTRACT_ADDRESS,
         ArtixMemeContestABI,
@@ -218,34 +233,26 @@ function ExploreMemes() {
       );
 
       // Fetch voting configuration
-      await fetchVotingConfig(contract);
+      const config = await contract.votingConfiguration();
+      setVotingConfig({
+        maxVotes: Number(config.maxVotes),
+        contestDuration: Number(config.contestDuration),
+        minVotesForWin: 1,
+        voteCost: config.voteCost
+      });
 
       const memesList: Meme[] = [];
       let memeId = 0;
       const MAX_MEMES_TO_CHECK = 100;
       let emptyMemeCount = 0;
       
-      console.log('Starting to fetch memes from blockchain...');
+      console.log('Fetching fresh meme data from blockchain...');
       
       while (memeId < MAX_MEMES_TO_CHECK) {
         try {
           const meme = await contract.memes(memeId);
-          console.log(`Meme #${memeId} Data:`, {
-            creator: meme.creator,
-            ipfsHash: meme.ipfsHash,
-            title: meme.title,
-            description: meme.description,
-            socialLinks: meme.socialLinks,
-            networkId: meme.networkId.toString(),
-            voteCount: meme.voteCount.toString(),
-            submissionTime: meme.submissionTime.toString(),
-            isActive: meme.isActive,
-            hasBeenMinted: meme.hasBeenMinted,
-            rawData: meme // Log the raw data as well
-          });
           
           if (meme.creator === '0x0000000000000000000000000000000000000000' || meme.ipfsHash === '') {
-            console.log(`Meme #${memeId} is empty, count: ${emptyMemeCount + 1}`);
             emptyMemeCount++;
             if (emptyMemeCount >= 3) break;
           } else {
@@ -257,13 +264,12 @@ function ExploreMemes() {
               title: meme.title,
               description: meme.description,
               socialLinks: meme.socialLinks,
-              networkId: meme.networkId.toNumber(),
-              voteCount: meme.voteCount.toNumber(),
-              submissionTime: meme.submissionTime.toNumber(),
+              networkId: Number(meme.networkId),
+              voteCount: Number(meme.voteCount),
+              submissionTime: Number(meme.submissionTime),
               isActive: meme.isActive,
               hasBeenMinted: meme.hasBeenMinted
             };
-            console.log(`Processed Meme #${memeId}:`, memeData);
             memesList.push(memeData);
           }
           memeId++;
@@ -275,20 +281,13 @@ function ExploreMemes() {
 
       // Check user's voted status if authenticated
       if (authenticated && activeWallet?.address) {
-        console.log('Checking vote status for user:', activeWallet.address);
         const memesWithVoteStatus = await checkUserVotes(contract, memesList, activeWallet.address);
-        console.log('Memes with vote status:', memesWithVoteStatus);
         setMemes(memesWithVoteStatus);
+        setFilteredMemes(memesWithVoteStatus);
       } else {
-        console.log('Setting memes without vote status:', memesList);
         setMemes(memesList);
+        setFilteredMemes(memesList);
       }
-
-      // Update cache with new data
-      setMemesCache({
-        data: memesList,
-        timestamp: Date.now()
-      });
 
     } catch (err: any) {
       console.error('Error fetching memes:', err);
@@ -298,11 +297,16 @@ function ExploreMemes() {
     }
   };
 
+  // Update useEffect to fetch on mount and when authentication changes
+  useEffect(() => {
+    fetchMemes();
+  }, [authenticated]); // Re-fetch when authentication status changes
+
   const checkAndMintNFT = async (meme: Meme) => {
     console.log('Checking NFT minting conditions for meme:', {
       memeId: meme.id,
       voteCount: meme.voteCount,
-      minVotesRequired: votingConfig?.minVotesForWin || 0,
+      minVotesRequired: votingConfig?.minVotesForWin || 1,
       hasBeenMinted: meme.hasBeenMinted
     });
 
@@ -317,120 +321,210 @@ function ExploreMemes() {
     }
 
     if (meme.voteCount >= votingConfig.minVotesForWin) {
-      console.log('Meme qualifies for NFT minting! Proceeding with CDP agent...');
+      console.log('Meme qualifies for NFT minting! Proceeding with Story Protocol registration...');
       try {
-        // Call CDP agent to mint NFT
-        const response = await fetch(`${CDP_AGENT_URL}/api/cdp/check-and-mint`, {
+        // First register with Story Protocol
+        const registerResponse = await fetch(API_ENDPOINTS.REGISTER_MEME, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             memeId: meme.id,
-            voteCount: meme.voteCount,
-            memeMetadata: {
-              title: meme.title,
-              description: meme.description,
-              ipfsHash: meme.ipfsHash,
-              creator: meme.creator,
-              socialLinks: meme.socialLinks
+            title: meme.title,
+            description: meme.description,
+            creator: meme.creator,
+            imageUrl: `https://ipfs.io/ipfs/${meme.ipfsHash}`,
+            metadata: {
+              tags: [], // Add tags if available
+              category: 'Community Meme',
+              aiGenerated: false
             }
           })
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.details || 'Failed to mint NFT');
+        if (!registerResponse.ok) {
+          const errorData = await registerResponse.json();
+          throw new Error(errorData.details || 'Failed to register with Story Protocol');
         }
 
-        const data = await response.json();
-        console.log('CDP Agent minting successful:', data);
+        const registrationData = await registerResponse.json();
+        console.log('Story Protocol registration successful:', registrationData);
 
-        // TODO: Update meme status in backend database instead of on-chain
-        // For now, just refresh to get latest state
+        // Then mint NFT using the backend endpoint
+        const mintResponse = await fetch(API_ENDPOINTS.MINT_NFT(meme.id.toString()), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ipId: registrationData.ipId // Pass the Story Protocol IP ID
+          })
+        });
+
+        if (!mintResponse.ok) {
+          throw new Error('Failed to mint NFT');
+        }
+
+        const mintData = await mintResponse.json();
+        console.log('NFT minting successful:', mintData);
+
+        // Refresh memes to get latest state
         await fetchMemes();
 
-        alert(`NFT minted successfully!\nTransaction Hash: ${data.transactionHash}\nToken ID: ${data.tokenId}\nView on OpenSea: ${getOpenSeaUrl(data.contractAddress, data.tokenId)}`);
-      } catch (error: any) {
-        console.error('Error with CDP agent:', error);
-        alert('Failed to mint NFT: ' + (error.message || 'Unknown error'));
+        alert(`NFT minted and registered with Story Protocol!\nTransaction Hash: ${mintData.transactionHash}\nToken ID: ${mintData.tokenId}\nView on OpenSea: ${getOpenSeaUrl(mintData.contractAddress, mintData.tokenId)}\nView on Story Protocol: https://aeneid.explorer.story.foundation/ipa/${registrationData.ipId}`);
+      } catch (error) {
+        console.error('Error in NFT minting process:', error);
+        alert('Failed to process NFT: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     } else {
       console.log(`Meme needs ${votingConfig.minVotesForWin - meme.voteCount} more votes to qualify for NFT minting`);
     }
   };
 
+  // Update voteMeme function to refresh after voting
   const voteMeme = async (memeId: number) => {
-    if (!authenticated || !activeWallet?.address) {
-      login();
+    if (!activeWallet) {
+      alert('Please connect your wallet first');
       return;
     }
 
     try {
-      setVotingStatus(prev => ({ ...prev, [memeId]: 'loading' }));
+      console.log('Starting vote process for meme:', memeId);
+      setVotingStatus(prev => ({
+        ...prev,
+        [memeId]: 'loading'
+      }));
 
-      const wallet = activeWallet as ConnectedWallet;
-      if (!wallet.getEthereumProvider) {
-        throw new Error('Wallet does not support Ethereum provider');
-      }
-      const provider = await wallet.getEthereumProvider();
-      
+      const provider = await activeWallet.getEthereumProvider();
       await switchToBaseSepolia(provider);
 
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const signer = ethersProvider.getSigner();
-      
-      // Vote on meme
-      const memeContract = new ethers.Contract(
-        ARTIX_CONTRACT_ADDRESS,
-        ArtixMemeContestABI,
-        signer
-      );
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new ethers.Contract(ARTIX_CONTRACT_ADDRESS, ArtixMemeContestABI, signer);
 
-      const voteCost = votingConfig?.voteCost || ethers.utils.parseEther("0.01");
-      const voteTx = await memeContract.voteMeme(memeId, { value: voteCost });
-      await voteTx.wait();
+      const votingConfig = await fetchVotingConfig(contract);
+      console.log('Submitting vote transaction...');
+      const tx = await contract.voteMeme(memeId, { value: votingConfig.voteCost });
+      console.log('Waiting for transaction confirmation...');
+      await tx.wait();
+      console.log('Vote transaction confirmed:', tx.hash);
 
-      // Update user's ranking
-      console.log('Updating user ranking after vote...');
-      const rankingContract = new ethers.Contract(
-        ARTIX_RANKING_CONTRACT_ADDRESS,
-        ArtifactRankingABI,
-        signer
-      );
+      // Add alert for successful vote
+      alert('Vote cast successfully!');
 
-      const rankingTx = await rankingContract.updateRanking(activeWallet.address, 1, false);
-      await rankingTx.wait();
-      console.log('Ranking updated successfully');
-
-      // Refresh memes after successful vote
+      console.log('Refreshing memes list...');
+      // Refresh memes list to update vote count
       await fetchMemes();
-      setVotingStatus(prev => ({ ...prev, [memeId]: 'success' }));
+      console.log('Memes list refreshed');
 
-      // After successful vote, check if meme should be minted
-      const votedMeme = memes.find(m => m.id === memeId);
-      if (votedMeme) {
-        await checkAndMintNFT(votedMeme);
+      // Get the fresh data for this meme after fetching
+      const updatedMeme = memes.find(m => m.id === memeId);
+      if (updatedMeme) {
+        // Get fresh data from contract to ensure accuracy
+        const freshMemeData = await contract.memes(memeId);
+        const currentVoteCount = Number(freshMemeData.voteCount);
+        const votesNeeded = (votingConfig?.minVotesForWin || 1) - currentVoteCount;
+        
+        if (votesNeeded <= 0 && !freshMemeData.hasBeenMinted) {
+          // Eligible for minting
+          const shouldMint = window.confirm(
+            `Congratulations! This meme has reached ${currentVoteCount} votes and is eligible for NFT minting!\n\nWould you like to mint it now?`
+          );
+          
+          if (shouldMint) {
+            console.log('Starting minting process...');
+            await checkAndMintNFT({
+              ...updatedMeme,
+              voteCount: currentVoteCount,
+              hasBeenMinted: freshMemeData.hasBeenMinted
+            });
+          }
+        } else if (!freshMemeData.hasBeenMinted) {
+          // Not yet eligible
+          alert(`This meme now has ${currentVoteCount} vote${currentVoteCount !== 1 ? 's' : ''}.\nNeeds ${votesNeeded} more vote${votesNeeded !== 1 ? 's' : ''} to be eligible for NFT minting!`);
+        }
       }
-    } catch (err: any) {
-      console.error('Error voting:', err);
-      setVotingStatus(prev => ({ ...prev, [memeId]: 'error' }));
-      alert(err.message || 'Error voting for meme');
+
+      setVotingStatus(prev => ({
+        ...prev,
+        [memeId]: 'success'
+      }));
+
+      // Reset voting status after 5 seconds
+      setTimeout(() => {
+        setVotingStatus(prev => ({
+          ...prev,
+          [memeId]: null
+        }));
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error voting:', error);
+      setVotingStatus(prev => ({
+        ...prev,
+        [memeId]: 'error'
+      }));
+
+      // Reset error status after 5 seconds
+      setTimeout(() => {
+        setVotingStatus(prev => ({
+          ...prev,
+          [memeId]: null
+        }));
+      }, 5000);
     }
   };
 
-  useEffect(() => {
-    console.log('ExploreMemes useEffect triggered', {
-      authenticated,
-      userWallet: user?.wallet?.address,
-      activeWallet: activeWallet?.address,
-      allWallets: wallets?.map(w => ({
-        type: w.walletClientType,
-        address: w.address
-      }))
-    });
-    fetchMemes();
-  }, [authenticated, user?.wallet?.address, activeWallet?.address]);
+  const registerWithStoryProtocol = async (meme: any) => {
+    try {
+      // Register with Story Protocol
+      const response = await fetch('/api/memes/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: meme.title,
+          description: meme.description,
+          creator: meme.creator,
+          imageUrl: `https://ipfs.io/ipfs/${meme.imageHash}`,
+          metadata: {
+            tags: meme.metadata.tags,
+            category: 'Community Meme',
+            aiGenerated: meme.metadata.aiGenerated
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to register with Story Protocol');
+      }
+
+      const data = await response.json();
+      console.log('Story Protocol registration successful:', data);
+
+      // Update meme in local storage to mark as registered
+      const storedMemes = JSON.parse(localStorage.getItem('memes') || '[]');
+      const updatedMemes = storedMemes.map((m: any) => {
+        if (m.timestamp === meme.timestamp) {
+          return {
+            ...m,
+            storyProtocolId: data.ipId,
+            registered: true
+          };
+        }
+        return m;
+      });
+      localStorage.setItem('memes', JSON.stringify(updatedMemes));
+      setMemes(updatedMemes);
+
+      alert(`Meme registered with Story Protocol!\nView on Story Protocol: https://aeneid.explorer.story.foundation/ipa/${data.ipId}`);
+    } catch (error) {
+      console.error('Error registering with Story Protocol:', error);
+      alert('Failed to register meme with Story Protocol');
+    }
+  };
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -443,7 +537,8 @@ function ExploreMemes() {
   console.log(formatDate(1712832000))
 
 
-  const getIPFSGatewayURL = (ipfsHash: string) => {
+  const getIPFSGatewayURL = (ipfsHash: string | undefined) => {
+    if (!ipfsHash) return '';
     const hash = ipfsHash.replace('ipfs://', '');
     return `https://ipfs.io/ipfs/${hash}`;
   };
@@ -457,10 +552,182 @@ function ExploreMemes() {
     if (status === 'success') return 'Voted!';
     if (status === 'error') return 'Failed - Try Again';
     if (meme.hasVoted) return 'Already Voted';
-    return `Vote (${ethers.utils.formatEther(votingConfig?.voteCost || '0')} ETH)`;
+    return `Vote (${ethers.formatEther(votingConfig?.voteCost || '0')} ETH)`;
   };
 
   console.log(getVoteButtonText(memes[0], 'loading'))
+
+  // Add this function to fetch auction data
+  const fetchAuctionData = async (memeId: number) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.GET_AUCTION}/${memeId}`);
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      return data as AuctionInfo;
+    } catch (error) {
+      console.error('Error fetching auction data:', error);
+      return null;
+    }
+  };
+
+  // Add auction creation function
+  const createAuction = async (memeId: number) => {
+    if (!authenticated || !activeWallet?.address) {
+      login();
+      return;
+    }
+
+    try {
+      setAuctionLoading(true);
+      const response = await fetch(API_ENDPOINTS.CREATE_AUCTION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          memeId,
+          startPrice: ethers.parseEther('0.1').toString(), // Default start price
+          duration: 7 * 24 * 60 * 60 // 7 days in seconds
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create auction');
+      }
+
+      const data = await response.json();
+      setAuctions(prev => ({
+        ...prev,
+        [memeId]: data
+      }));
+
+      alert('Auction created successfully!');
+    } catch (error: any) {
+      console.error('Error creating auction:', error);
+      alert(error.message || 'Error creating auction');
+    } finally {
+      setAuctionLoading(false);
+    }
+  };
+
+  // Add bidding function
+  const placeBid = async (memeId: number) => {
+    if (!authenticated || !activeWallet?.address) {
+      login();
+      return;
+    }
+
+    try {
+      setAuctionLoading(true);
+      const response = await fetch(API_ENDPOINTS.PLACE_BID, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          memeId,
+          amount: ethers.parseEther(bidAmount).toString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to place bid');
+      }
+
+      const data = await response.json();
+      setAuctions(prev => ({
+        ...prev,
+        [memeId]: data
+      }));
+
+      setBidAmount('');
+      setActiveBidMemeId(null);
+      alert('Bid placed successfully!');
+    } catch (error: any) {
+      console.error('Error placing bid:', error);
+      alert(error.message || 'Error placing bid');
+    } finally {
+      setAuctionLoading(false);
+    }
+  };
+
+  // Add this to your meme card rendering
+  const renderAuctionInfo = (meme: Meme) => {
+    const auction = auctions[meme.id];
+    if (!auction) {
+      if (meme.hasBeenMinted && meme.creator === activeWallet?.address) {
+        return (
+          <button
+            onClick={() => createAuction(meme.id)}
+            disabled={auctionLoading}
+            className="px-4 py-2 bg-[#FFD700] text-[#121212] rounded-full text-sm font-medium hover:bg-[#FFD700]/90 transition-all"
+          >
+            {auctionLoading ? 'Creating...' : 'Start Auction'}
+          </button>
+        );
+      }
+      return null;
+    }
+
+    const isEnded = auction.endTime < Date.now() / 1000;
+    const currentPrice = ethers.formatEther(auction.currentPrice);
+    const isHighestBidder = auction.highestBidder === activeWallet?.address;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-white/60 text-sm">Current Price</span>
+          <span className="text-white font-medium">{currentPrice} ETH</span>
+        </div>
+        
+        {!isEnded && (
+          <div className="space-y-2">
+            {isHighestBidder ? (
+              <div className="text-[#FFD700] text-sm">You are the highest bidder!</div>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  placeholder="Enter bid amount in ETH"
+                  className="w-full px-3 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm"
+                />
+                <button
+                  onClick={() => placeBid(meme.id)}
+                  disabled={auctionLoading || !bidAmount}
+                  className="w-full px-4 py-2 bg-[#FFD700] text-[#121212] rounded-full text-sm font-medium hover:bg-[#FFD700]/90 transition-all disabled:opacity-50"
+                >
+                  {auctionLoading ? 'Placing Bid...' : 'Place Bid'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="text-white/40 text-xs">
+          {isEnded ? 'Auction ended' : `Ends in ${formatTimeLeft(auction.endTime)}`}
+        </div>
+      </div>
+    );
+  };
+
+  const formatTimeLeft = (endTime: number) => {
+    const now = Math.floor(Date.now() / 1000);
+    const timeLeft = endTime - now;
+    
+    if (timeLeft <= 0) return 'Ended';
+    
+    const days = Math.floor(timeLeft / (24 * 60 * 60));
+    const hours = Math.floor((timeLeft % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((timeLeft % (60 * 60)) / 60);
+    
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -489,7 +756,7 @@ function ExploreMemes() {
               <div className="bg-[#1A1A1A]/50 backdrop-blur-sm rounded-2xl p-6">
                 <span className="text-[#FFD700] text-sm font-medium font-['Poppins']">vote cost</span>
                 <p className="text-white text-2xl font-bold font-['Poppins']">
-                  {votingConfig ? ethers.utils.formatEther(votingConfig.voteCost) : '0.01'} ETH
+                  {votingConfig ? ethers.formatEther(votingConfig.voteCost) : '0.01'} ETH
                 </p>
               </div>
               <div className="bg-[#1A1A1A]/50 backdrop-blur-sm rounded-2xl p-6">
@@ -639,9 +906,13 @@ function ExploreMemes() {
                   {/* Meme Image - Fixed height with overflow hidden */}
                   <div className="h-[300px] flex-shrink-0 overflow-hidden">
                     <img 
-                      src={getIPFSGatewayURL(meme.ipfsHash)}
+                      src={meme.ipfsHash ? getIPFSGatewayURL(meme.ipfsHash) : ''}
                       alt={meme.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-meme.png'; // Add a placeholder image
+                        e.currentTarget.onerror = null; // Prevent infinite loop
+                      }}
                     />
                   </div>
 
@@ -662,6 +933,9 @@ function ExploreMemes() {
                     </div>
                   </div>
                 </Link>
+
+                {/* Add auction info after vote button */}
+                {meme.hasBeenMinted && renderAuctionInfo(meme)}
               </div>
             ))}
           </div>

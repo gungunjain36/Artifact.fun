@@ -1,9 +1,11 @@
 import { Agent } from '@fileverse/agents';
 import { type MemeContent } from './story-protocol';
+import axios from 'axios';
 
 export class FileverseService {
     private agent: Agent;
     private namespace: string;
+    private initialized: boolean = false;
 
     constructor() {
         // Validate required environment variables
@@ -28,13 +30,23 @@ export class FileverseService {
         try {
             console.log('Initializing Fileverse storage...');
             
+            // Setup Safe account first
+            await this.agent.setupSafe();
+            console.log('Safe account set up');
+
             // Setup storage with namespace
-            await this.agent.setupStorage(this.namespace);
-            console.log('Fileverse storage initialized');
+            const storage = await this.agent.loadStorage(this.namespace);
+            if (!storage) {
+                await this.agent.setupStorage(this.namespace);
+                console.log('Fileverse storage initialized');
+            } else {
+                console.log('Storage already exists');
+            }
 
             const portal = await this.agent.getPortal();
             console.log('Portal address:', portal);
 
+            this.initialized = true;
             return portal;
         } catch (error) {
             console.error('Failed to initialize Fileverse:', error);
@@ -42,8 +54,41 @@ export class FileverseService {
         }
     }
 
+    async uploadFile(buffer: Buffer | string, mimeType: string): Promise<{ url: string; id: string }> {
+        try {
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
+            // If buffer is a base64 string, convert it to Buffer
+            const fileBuffer = typeof buffer === 'string' 
+                ? Buffer.from(buffer, 'base64')
+                : buffer;
+
+            // Create a temporary file with the content
+            const fileName = `meme-${Date.now()}.${mimeType.split('/')[1] || 'png'}`;
+            const content = fileBuffer.toString();
+
+            // Upload to IPFS through agent's uploadToIPFS method
+            const ipfsHash = await this.agent.uploadToIPFS(fileName, content);
+            const hash = ipfsHash.replace('ipfs://', '');
+
+            return {
+                url: `${process.env.PINATA_GATEWAY}/ipfs/${hash}`,
+                id: hash
+            };
+        } catch (error) {
+            console.error('Failed to upload file:', error);
+            throw error;
+        }
+    }
+
     async storeMemeMetadata(meme: MemeContent) {
         try {
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
             // Create metadata file
             const metadata = {
                 title: meme.title,
@@ -54,11 +99,26 @@ export class FileverseService {
                 createdAt: new Date().toISOString()
             };
 
-            // Store metadata in Fileverse
-            const file = await this.agent.create(JSON.stringify(metadata, null, 2));
-            console.log('Meme metadata stored:', file);
+            // Convert metadata to string
+            const metadataString = JSON.stringify(metadata, null, 2);
 
-            return file;
+            try {
+                // Store metadata through agent
+                const file = await this.agent.create(metadataString);
+                return {
+                    id: file.fileId,
+                    url: `${process.env.PINATA_GATEWAY}/ipfs/${file.fileId}`,
+                    content: metadata
+                };
+            } catch (error) {
+                console.error('Failed to store through agent, using direct IPFS:', error);
+                // If agent fails, return the existing data
+                return {
+                    id: meme.metadata.fileId || '',
+                    url: meme.imageUrl,
+                    content: metadata
+                };
+            }
         } catch (error) {
             console.error('Failed to store meme metadata:', error);
             throw error;
@@ -67,9 +127,26 @@ export class FileverseService {
 
     async getMemeMetadata(fileId: string) {
         try {
-            const file = await this.agent.getFile(fileId);
-            console.log('Retrieved meme metadata:', file);
-            return file;
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
+            try {
+                const file = await this.agent.getFile(fileId);
+                return {
+                    id: fileId,
+                    content: JSON.parse(file.content.toString()),
+                    url: `${process.env.PINATA_GATEWAY}/ipfs/${fileId}`
+                };
+            } catch (error) {
+                console.error('Failed to get file through agent:', error);
+                // If agent fails, return a basic structure
+                return {
+                    id: fileId,
+                    content: {},
+                    url: `${process.env.PINATA_GATEWAY}/ipfs/${fileId}`
+                };
+            }
         } catch (error) {
             console.error('Failed to get meme metadata:', error);
             throw error;
@@ -78,7 +155,10 @@ export class FileverseService {
 
     async updateMemeMetadata(fileId: string, meme: MemeContent) {
         try {
-            // Update metadata
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
             const metadata = {
                 title: meme.title,
                 description: meme.description,
@@ -88,11 +168,13 @@ export class FileverseService {
                 updatedAt: new Date().toISOString()
             };
 
-            // Update file in Fileverse
             const file = await this.agent.update(fileId, JSON.stringify(metadata, null, 2));
-            console.log('Meme metadata updated:', file);
 
-            return file;
+            return {
+                id: file.fileId,
+                url: `${process.env.PINATA_GATEWAY}/ipfs/${file.fileId}`,
+                content: metadata
+            };
         } catch (error) {
             console.error('Failed to update meme metadata:', error);
             throw error;
@@ -101,21 +183,15 @@ export class FileverseService {
 
     async deleteMemeMetadata(fileId: string) {
         try {
-            const file = await this.agent.delete(fileId);
-            console.log('Meme metadata deleted:', file);
-            return file;
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
+            await this.agent.delete(fileId);
+            return { success: true };
         } catch (error) {
             console.error('Failed to delete meme metadata:', error);
             throw error;
         }
     }
-
-    async getBlockNumber() {
-        try {
-            return await this.agent.getBlockNumber();
-        } catch (error) {
-            console.error('Failed to get block number:', error);
-            throw error;
-        }
-    }
-}
+} 

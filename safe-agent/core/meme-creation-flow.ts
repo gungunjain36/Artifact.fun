@@ -1,86 +1,118 @@
-import { StoryProtocolService } from './story-protocol';
-import { MemeNFTManager } from './nft-manager';
-import { MemeContent } from './story-protocol';
-import { Address } from 'viem';
+import { StoryProtocolService, MemeContent } from './story-protocol';
+import { VeniceAIService } from './venice-ai';
+import { SafeIntegration } from './safe-integration';
+import { uploadJSONToIPFS } from './upload-ipfs';
+import { createHash } from 'crypto';
+
+export interface MemeGenerationConfig {
+    prompt: string;
+    category: string;
+    tags: string[];
+}
 
 export class MemeCreationFlow {
     private storyService: StoryProtocolService;
-    private nftManager: MemeNFTManager;
-    private spgNftContract: Address | null = null;
+    private veniceAI: VeniceAIService;
+    private safeIntegration: SafeIntegration;
 
-    constructor(storyService: StoryProtocolService, nftManager: MemeNFTManager) {
+    constructor(
+        storyService: StoryProtocolService,
+        veniceAI: VeniceAIService,
+        safeIntegration: SafeIntegration
+    ) {
         this.storyService = storyService;
-        this.nftManager = nftManager;
+        this.veniceAI = veniceAI;
+        this.safeIntegration = safeIntegration;
     }
 
-    async initializeCollection() {
+    async generateAndRegisterMeme(config: MemeGenerationConfig) {
         try {
-            // Create a new SPG collection if we don't have one
-            if (!this.spgNftContract) {
-                const collection = await this.nftManager.createSpgCollection('Artifacts', 'ARTI');
-                this.spgNftContract = collection.spgNftContract as Address;
-                console.log('Created new SPG collection:', this.spgNftContract);
+            // 1. Generate meme using Venice AI
+            console.log('Generating meme with Venice AI...');
+            const { imageUrl, base64Data } = await this.veniceAI.generateMeme(config.prompt);
+
+            // 2. Prepare meme content
+            const memeContent: MemeContent = {
+                title: `AI Generated: ${config.prompt.slice(0, 50)}...`,
+                description: config.prompt,
+                creator: await this.safeIntegration.getAgentAddress(),
+                imageUrl,
+                metadata: {
+                    tags: config.tags,
+                    category: config.category,
+                    aiGenerated: true
+                }
+            };
+
+            // 3. Register with Story Protocol
+            console.log('Registering meme with Story Protocol...');
+            const registration = await this.storyService.mintAndRegisterMeme(
+                memeContent,
+                process.env.SPG_NFT_CONTRACT_ADDRESS!
+            );
+
+            // 4. Set up royalties
+            if (registration.ipId) {
+                await this.storyService.payRoyalty(registration.ipId, 0.001); // Default small royalty
             }
-            return this.spgNftContract;
+
+            return {
+                memeContent,
+                registration,
+                imageUrl
+            };
         } catch (error) {
-            console.error('Failed to initialize collection:', error);
+            console.error('Failed to generate and register meme:', error);
             throw error;
         }
     }
 
-    async createMeme(meme: MemeContent) {
+    async createDerivativeMeme(
+        originalMemeId: string,
+        config: MemeGenerationConfig,
+        licenseTermsId: string
+    ) {
         try {
-            // Ensure we have a collection
-            const spgNftContract = await this.initializeCollection();
+            // 1. Generate new version with Venice AI
+            console.log('Generating derivative meme...');
+            const { imageUrl, base64Data } = await this.veniceAI.generateMeme(config.prompt);
 
-            // Register the meme as an IP Asset
-            const registration = await this.storyService.mintAndRegisterMeme(meme, spgNftContract);
-            console.log('Meme registered with ID:', registration.ipId);
+            // 2. Prepare derivative content
+            const derivativeMeme: MemeContent = {
+                title: `Derivative: ${config.prompt.slice(0, 50)}...`,
+                description: `Derivative work based on ${originalMemeId}. ${config.prompt}`,
+                creator: await this.safeIntegration.getAgentAddress(),
+                imageUrl,
+                metadata: {
+                    tags: config.tags,
+                    category: config.category,
+                    aiGenerated: true
+                }
+            };
 
-            return registration;
-        } catch (error) {
-            console.error('Failed to create meme:', error);
-            throw error;
-        }
-    }
-
-    async createDerivativeMeme(meme: MemeContent, parentIpId: string, licenseTermsId: string) {
-        try {
-            // Ensure we have a collection
-            const spgNftContract = await this.initializeCollection();
-
-            // Register the derivative meme
+            // 3. Register derivative with Story Protocol
+            console.log('Registering derivative meme...');
             const registration = await this.storyService.registerMemeAsDerivative(
-                meme,
-                spgNftContract,
-                parentIpId,
+                derivativeMeme,
+                process.env.SPG_NFT_CONTRACT_ADDRESS!,
+                originalMemeId,
                 licenseTermsId
             );
-            console.log('Derivative meme registered with ID:', registration.ipId);
 
-            return registration;
+            return {
+                memeContent: derivativeMeme,
+                registration,
+                imageUrl
+            };
         } catch (error) {
             console.error('Failed to create derivative meme:', error);
             throw error;
         }
     }
 
-    async payRoyalties(memeId: string, amount: number) {
-        try {
-            const payment = await this.storyService.payRoyalty(memeId, amount);
-            console.log('Royalty payment successful:', payment.txHash);
-            return payment;
-        } catch (error) {
-            console.error('Failed to pay royalties:', error);
-            throw error;
-        }
-    }
-
     async claimRoyalties(memeId: string) {
         try {
-            const claim = await this.storyService.claimRevenue(memeId);
-            console.log('Revenue claimed:', claim.claimedTokens);
-            return claim;
+            return await this.storyService.claimRevenue(memeId);
         } catch (error) {
             console.error('Failed to claim royalties:', error);
             throw error;

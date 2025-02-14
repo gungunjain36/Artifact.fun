@@ -15,7 +15,7 @@ const SAFE_ADDRESS = process.env.SAFE_ADDRESS!
 const AGENT_ADDRESS = '0x8880bfd0a9c311A92E1Be07330153721E4402700'
 const AGENT_PRIVATE_KEY = process.env.AGENT_PRIVATE_KEY!
 const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
-const RPC_URL = 'https://rpc.ankr.com/eth_sepolia'
+const RPC_URL = process.env.RPC_URL!
 
 if (!SAFE_ADDRESS || !AGENT_PRIVATE_KEY) {
   throw new Error('SAFE_ADDRESS and AGENT_PRIVATE_KEY must be provided')

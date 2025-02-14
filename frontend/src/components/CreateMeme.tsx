@@ -25,6 +25,135 @@ const BASE_SEPOLIA_PARAMS = {
   blockExplorerUrls: ['https://sepolia.basescan.org']
 };
 
+// Update API endpoints
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const API_ENDPOINTS = {
+    CREATE_SAFE: `${API_BASE_URL}/auth/create-safe`,
+    GET_USER_SAFE: (userAddress: string) => `${API_BASE_URL}/auth/user-safe/${userAddress}`,
+    CREATE_MEME: `${API_BASE_URL}/memes`,
+    GET_MEME: (fileId: string) => `${API_BASE_URL}/memes/${fileId}`,
+    SUBMIT_MEME: `${API_BASE_URL}/memes/submit`,
+    INITIALIZE_AGENT: `${API_BASE_URL}/agent/initialize`,
+    AGENT_MESSAGE: `${API_BASE_URL}/agent/message`,
+    UPLOAD_FILE: `${API_BASE_URL}/files/upload`
+};
+
+interface APIResponse<T> {
+  success: boolean;
+  error?: string;
+  details?: string;
+  data?: T;
+}
+
+interface MemeResponse {
+  meme: {
+    title: string;
+    description: string;
+    creator: string;
+    imageUrl: string;
+    metadata: {
+      tags: string[];
+      category: string;
+      aiGenerated: boolean;
+    };
+    registration: any;
+    file: {
+      id: string;
+      url: string;
+    };
+  };
+  variations?: string[];
+  enhancedPrompt?: string;
+}
+
+interface AIGenerationResult {
+  imageUrl: string;
+  variations: string[];
+  metadata: {
+    style: string;
+    prompt: string;
+    enhancedPrompt: string;
+  };
+}
+
+interface MemeStyle {
+  name: string;
+  description: string;
+  icon: string;
+}
+
+const MEME_STYLES: MemeStyle[] = [
+  {
+    name: "Classic Meme",
+    description: "Traditional viral-worthy memes that are relatable and funny",
+    icon: "🎭"
+  },
+  {
+    name: "Dank Meme",
+    description: "Surreal, absurdist humor with deep-fried aesthetics",
+    icon: "🌀"
+  },
+  {
+    name: "Wholesome",
+    description: "Heartwarming and positive memes that make people smile",
+    icon: "💖"
+  }
+];
+
+const STATUS_MESSAGES = {
+  pending: { text: 'Registering with Story Protocol...', icon: 'pending' },
+  submitting: { text: 'Submitting meme...', icon: 'submitting' },
+  success: { text: 'Successfully registered!', icon: 'success' },
+  error: { text: 'Registration failed', icon: 'error' }
+} as const;
+
+type IpRegistrationStatus = keyof typeof STATUS_MESSAGES | null;
+
+interface SubmitEvent {
+  fragment?: {
+    name: string;
+  };
+  args: {
+    memeId: string;
+  };
+}
+
+// Add to existing types at the top
+interface UploadError extends Error {
+  response?: {
+    data: any;
+    status: number;
+  };
+}
+
+interface MemeMetadata {
+  aiGenerated: boolean;
+  prompt: string;
+  tags: string[];
+}
+
+interface MemeData {
+  title: string;
+  description: string;
+  imageHash: string;
+  creator: string;
+  timestamp: number;
+  votes: number;
+  style: string;
+  metadata: MemeMetadata;
+}
+
+// Add this interface near the top with other interfaces
+interface TransactionLog {
+  fragment?: {
+    name: string;
+  };
+  args: {
+    memeId: ethers.BigNumber;
+  };
+}
+
 function CreateMeme() {
   const { login, authenticated } = usePrivy();
   const { wallets } = useWallets();
@@ -40,9 +169,19 @@ function CreateMeme() {
     title: '',
     description: '',
     socialLinks: '',
-    networkId: '84532' // Default to Base Sepolia
+    networkId: '84532', // Default to Base Sepolia
+    fileId: ''
   });
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<'Classic Meme' | 'Dank Meme' | 'Wholesome'>('Classic Meme');
+  const [variations, setVariations] = useState<string[]>([]);
+  const [selectedVariation, setSelectedVariation] = useState<number>(0);
+  const [ipRegistrationStatus, setIpRegistrationStatus] = useState<IpRegistrationStatus>(null);
+  const [generationHistory, setGenerationHistory] = useState<AIGenerationResult[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [enhancedPrompt, setEnhancedPrompt] = useState<string>('');
+  const [isLoadingEnhancement, setIsLoadingEnhancement] = useState(false);
+  const [submissionLogs, setSubmissionLogs] = useState<string[]>([]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -66,40 +205,37 @@ function CreateMeme() {
   };
 
   const uploadToPinata = async (file: File): Promise<string> => {
+    console.log('Starting upload to Pinata...');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers = {
+      'Content-Type': 'multipart/form-data',
+      'pinata_api_key': import.meta.env.VITE_PINATA_API_KEY!,
+      'pinata_secret_api_key': import.meta.env.VITE_PINATA_SECRET_KEY!
+    };
+
     try {
-      console.log('Starting upload to Pinata...');
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Log headers (without showing full credentials)
-      console.log('Upload headers check:', {
-        hasApiKey: !!PINATA_API_KEY,
-        hasSecretKey: !!PINATA_SECRET_KEY,
-        contentType: 'multipart/form-data'
-      });
-
-      // Upload to Pinata
-      const res = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
-        headers: {
-          'Content-Type': `multipart/form-data`,
-          'pinata_api_key': PINATA_API_KEY,
-          'pinata_secret_api_key': PINATA_SECRET_KEY
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        formData,
+        { 
+          headers,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity
         }
-      });
+      );
 
-      // Return the IPFS hash
-      const ipfsHash = `ipfs://${res.data.IpfsHash}`;
-      console.log('Upload successful. IPFS Hash:', ipfsHash);
-      return ipfsHash;
+      console.log('Upload successful. IPFS Hash:', response.data.IpfsHash);
+      return response.data.IpfsHash;
     } catch (error: any) {
       console.error('Detailed upload error:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
       });
-      throw new Error(`Failed to upload image to IPFS: ${error.response?.data?.message || error.message}`);
+      throw new Error(`Failed to upload image to IPFS: ${error.message}`);
     }
   };
 
@@ -129,159 +265,184 @@ function CreateMeme() {
     }
   };
 
-  const submitMeme = async () => {
-    if (!imageFile || !authenticated || !wallets?.[0]) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      
-      // Upload to IPFS
-      const ipfsHash = await uploadToPinata(imageFile);
-      console.log('IPFS Upload successful:', ipfsHash);
-
-      const wallet = wallets[0];
-      const provider = await wallet.getEthereumProvider();
-      
-      if (!provider) {
-        throw new Error('No provider available');
-      }
-
-      await switchToBaseSepolia(provider);
-
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      await ethersProvider.send("eth_requestAccounts", []);
-      const signer = ethersProvider.getSigner();
-
-      // Submit meme
-      console.log('Submitting meme to contract...');
-      const memeContract = new ethers.Contract(
-        ARTIX_CONTRACT_ADDRESS,
-        ArtixMemeContestABI,
-        signer
-      );
-
-      const memeTx = await memeContract.submitMeme(
-        ipfsHash,
-        formData.title,
-        formData.description,
-        formData.socialLinks,
-        BigInt(formData.networkId),
-        { gasLimit: 500000 }
-      );
-
-      console.log('Meme submission transaction sent:', memeTx.hash);
-      const memeReceipt = await memeTx.wait();
-      console.log('Meme submission confirmed:', memeReceipt);
-
-      // Update user's ranking for meme submission
-      console.log('Updating user ranking for meme submission...');
-      const rankingContract = new ethers.Contract(
-        ARTIX_RANKING_CONTRACT_ADDRESS,
-        ArtifactRankingABI,
-        signer
-      );
-
-      const rankingTx = await rankingContract.updateRanking(wallets[0].address, 0, true);
-      await rankingTx.wait();
-      console.log('Ranking updated successfully');
-
-      // Reset form
-      setImageFile(null);
-      setImagePreview(null);
-      setFormData({
-        title: '',
-        description: '',
-        socialLinks: '',
-        networkId: '84532'
-      });
-      
-      alert('Meme submitted successfully! Transaction hash: ' + memeTx.hash);
-      setSubmissionSuccess(true);
-    } catch (error: any) {
-      console.error('Detailed error:', error);
-      alert('Error submitting meme: ' + (error.message || 'Unknown error'));
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const generateAIMeme = async () => {
     if (!aiPrompt) return;
     
     try {
       setIsGeneratingAI(true);
+      setIsLoadingEnhancement(true);
       
-      const options = {
+      // Generate meme with variations using autonomous agent
+      const response = await fetch(API_ENDPOINTS.CREATE_MEME, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${VENICE_API_KEY}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          model: "fluently-xl",
           prompt: aiPrompt,
-          width: 1024,
-          height: 1024,
-          steps: 30,
-          hide_watermark: false,
-          return_binary: false,
-          seed: Math.floor(Math.random() * 1000000),
-          cfg_scale: 7,
-          style_preset: "3D Model",
-          negative_prompt: "blurry, low quality, distorted",
-          safe_mode: false
+          style: selectedStyle,
+          generateVariations: true
         })
-      };
+      });
 
-      const response = await fetch('https://api.venice.ai/api/v1/image/generate', options);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || 
+          errorData?.details || 
+          `Server error: ${response.status}`
+        );
+      }
+
       const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate meme');
       }
 
-      // Log the response to see what we're getting
-      console.log('Venice API Response:', data);
+      const { meme } = data.data;
+      
+      // Update form with generated content
+      setFormData(prev => ({
+        ...prev,
+        title: meme.title || aiPrompt,
+        description: meme.description || `AI-generated meme: ${aiPrompt}`,
+        socialLinks: '',
+        fileId: meme.id // Store the Fileverse file ID
+      }));
 
-      // Check if we have the base64 image data
-      if (!data.images?.[0]) {
-        throw new Error('No image data in response');
+      // Set image preview - prefer base64 data over URL
+      console.log('Setting image preview...');
+      if (meme.imageData) {
+        console.log('Using base64 image data');
+        setImagePreview(meme.imageData);
+      } else if (meme.imageUrl) {
+        console.log('Using image URL:', meme.imageUrl);
+        setImagePreview(meme.imageUrl);
       }
+      
+      // For debugging - log if image loads successfully
+      const img = new Image();
+      img.onload = () => console.log('Image loaded successfully');
+      img.onerror = (e) => console.error('Error loading image:', e);
+      img.src = meme.imageUrl;
 
-      // Get the base64 image data
-      const base64Image = data.images[0];
-      console.log('Got base64 image data');
+      setVariations([]); // Clear variations for now
+      setEnhancedPrompt(meme.metadata.prompt || aiPrompt);
+      
+      // Add to generation history
+      setGenerationHistory(prev => [{
+        imageUrl: meme.imageUrl,
+        variations: [],
+        metadata: {
+          style: selectedStyle,
+          prompt: aiPrompt,
+          enhancedPrompt: meme.metadata.prompt || aiPrompt
+        }
+      }, ...prev]);
 
-      // Convert base64 to blob
-      const byteCharacters = atob(base64Image);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/png' });
-      console.log('Converted to blob:', blob);
-      
-      // Create a File object from the blob
-      const file = new File([blob], 'ai-generated-meme.png', { type: 'image/png' });
-      
-      // Create an object URL for preview
-      const previewUrl = URL.createObjectURL(blob);
-      console.log('Preview URL:', previewUrl);
-
-      setImageFile(file);
-      setImagePreview(previewUrl);
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating AI meme:', error);
-      alert('Failed to generate AI meme. Please try again.');
+      alert(error.message || 'Failed to generate AI meme. Please try again.');
     } finally {
       setIsGeneratingAI(false);
+      setIsLoadingEnhancement(false);
+    }
+  };
+
+  const addLog = (message: string) => {
+    setSubmissionLogs(prev => [...prev, message]);
+  };
+
+  const submitMeme = async () => {
+    try {
+      if (!wallets?.[0]?.address || !imageFile) {
+        console.error('No wallet connected or no image selected');
+        return;
+      }
+
+      addLog('Starting meme submission process...');
+
+      // 1. First upload image to IPFS via Pinata
+      addLog('Uploading image to IPFS via Pinata...');
+      const pinataFormData = new FormData();
+      pinataFormData.append('file', imageFile);
+
+      const pinataResponse = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        pinataFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'pinata_api_key': PINATA_API_KEY,
+            'pinata_secret_api_key': PINATA_SECRET_KEY
+          },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity
+        }
+      );
+
+      console.log('Pinata upload response:', pinataResponse.data);
+      const ipfsHash = pinataResponse.data.IpfsHash;
+      addLog(`Image uploaded to IPFS with hash: ${ipfsHash}`);
+
+      // 2. Get provider and create contract instance
+      addLog('Connecting to wallet and contract...');
+      const provider = await wallets?.[0]?.getEthereumProvider();
+      await switchToBaseSepolia(provider);
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      
+      const contract = new ethers.Contract(
+        ARTIX_CONTRACT_ADDRESS,
+        ArtixMemeContestABI,
+        signer
+      );
+
+      console.log('Contract setup complete:', {
+        address: ARTIX_CONTRACT_ADDRESS,
+        signer: signer.address
+      });
+
+      // 3. Submit meme to blockchain
+      addLog('Submitting meme to blockchain...');
+      const tx = await contract.submitMeme(
+        ipfsHash,
+        formData.title,
+        formData.description,
+        formData.socialLinks || '',
+        formData.networkId
+      );
+
+      console.log('Transaction sent:', tx.hash);
+      addLog(`Transaction sent: ${tx.hash}`);
+
+      // 4. Wait for transaction confirmation
+      addLog('Waiting for transaction confirmation...');
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed:', receipt);
+
+      // 5. Get meme ID from event logs
+      const submitEvent = receipt.logs.find(
+        (log: TransactionLog) => log.fragment?.name === 'MemeSubmitted'
+      );
+
+      if (submitEvent) {
+        const memeId = submitEvent.args.memeId;
+        console.log('Meme submitted successfully! Meme ID:', memeId.toString());
+        addLog(`Meme submitted successfully! Meme ID: ${memeId}`);
+        setSubmissionSuccess(true);
+      }
+
+    } catch (error) {
+      console.error('Error submitting meme:', error);
+      addLog(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        console.error('Detailed error:', error.response.data);
+        addLog(`Detailed error: ${JSON.stringify(error.response.data)}`);
+      }
+      alert('Failed to submit meme: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -296,6 +457,197 @@ function CreateMeme() {
   const handlePrevious = () => {
     setStep(prev => prev === 1 ? 1 : (prev - 1) as 1 | 2 | 3);
   };
+
+  const renderVariations = () => {
+    if (!variations.length) return null;
+
+    return (
+      <div className="mt-6">
+        <h3 className="text-white text-lg font-medium mb-4">Style Variations</h3>
+        <div className="grid grid-cols-3 gap-4">
+          {variations.map((variation, index) => (
+            <div
+              key={index}
+              className={`relative cursor-pointer rounded-lg overflow-hidden ${
+                selectedVariation === index ? 'ring-2 ring-[#FFD700]' : ''
+              }`}
+              onClick={() => {
+                setSelectedVariation(index);
+                setImagePreview(variation);
+              }}
+            >
+              <img
+                src={variation}
+                alt={`Variation ${index + 1}`}
+                className="w-full h-40 object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm py-1 px-2">
+                Style {index + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderIPRegistrationStatus = () => {
+    if (!ipRegistrationStatus) return null;
+
+    const config = STATUS_MESSAGES[ipRegistrationStatus];
+
+    return (
+      <div className={`flex items-center gap-2 mt-4 ${
+        ipRegistrationStatus === 'error' ? 'text-red-500' : 'text-[#FFD700]'
+      }`}>
+        {config.icon === 'pending' && (
+          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        )}
+        {config.icon === 'success' && (
+          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        )}
+        {config.icon === 'error' && (
+          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        )}
+        <span className="text-sm font-medium">{config.text}</span>
+      </div>
+    );
+  };
+
+  const renderStyleSelection = () => (
+    <div className="space-y-4">
+      <label className="text-white/60 text-sm font-['Poppins']">Select Meme Style</label>
+      <div className="grid grid-cols-1 gap-3">
+        {MEME_STYLES.map((style) => (
+          <button
+            key={style.name}
+            onClick={() => setSelectedStyle(style.name as any)}
+            className={`flex items-center p-4 rounded-xl transition-all ${
+              selectedStyle === style.name
+                ? 'bg-[#FFD700] text-[#121212]'
+                : 'bg-[#1A1A1A] text-white/60 hover:bg-[#1A1A1A]/80 hover:text-white'
+            }`}
+          >
+            <span className="text-2xl mr-3">{style.icon}</span>
+            <div className="text-left">
+              <div className="font-medium">{style.name}</div>
+              <div className="text-sm opacity-80">{style.description}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderGenerationHistory = () => {
+    if (!showHistory || generationHistory.length === 0) return null;
+
+    return (
+      <div className="mt-6 p-4 bg-[#1A1A1A] rounded-xl">
+        <h3 className="text-white text-lg font-medium mb-4">Generation History</h3>
+        <div className="space-y-4">
+          {generationHistory.map((result, index) => (
+            <div key={index} className="p-4 bg-black/20 rounded-lg">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className="text-[#FFD700]">{result.metadata.style}</span>
+                  <p className="text-white/60 text-sm mt-1">{result.metadata.prompt}</p>
+                  <p className="text-white/40 text-xs mt-1">Enhanced: {result.metadata.enhancedPrompt}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setImagePreview(result.imageUrl);
+                    setSelectedVariation(0);
+                  }}
+                  className="px-3 py-1 bg-[#FFD700]/10 text-[#FFD700] rounded-full text-sm hover:bg-[#FFD700]/20"
+                >
+                  Use
+                </button>
+              </div>
+              <img
+                src={result.imageUrl}
+                alt={`Generation ${index + 1}`}
+                className="w-full h-40 object-cover rounded-lg"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSubmissionLogs = () => (
+    <div className="mt-8 text-left max-w-lg mx-auto">
+      <div className="bg-[#1A1A1A] rounded-xl p-4 font-mono text-sm">
+        {submissionLogs.map((log, index) => (
+          <div key={index} className="text-white/80">
+            {log}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAIGenerationForm = () => (
+    <div className="space-y-6">
+      <div className="relative">
+        <textarea
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+          placeholder="Describe your meme idea..."
+          className="w-full h-32 px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-2xl border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
+        />
+        {enhancedPrompt && (
+          <div className="mt-2 p-3 bg-[#1A1A1A]/50 rounded-xl">
+            <span className="text-[#FFD700] text-sm">Enhanced Prompt:</span>
+            <p className="text-white/80 text-sm mt-1">{enhancedPrompt}</p>
+          </div>
+        )}
+      </div>
+
+      {renderStyleSelection()}
+
+      <div className="flex gap-4">
+        <button
+          onClick={generateAIMeme}
+          disabled={!aiPrompt || isGeneratingAI}
+          className={`flex-1 px-6 py-3 rounded-full font-['Poppins'] font-medium transition-all ${
+            !aiPrompt || isGeneratingAI 
+              ? 'bg-[#1A1A1A]/50 text-white/60' 
+              : 'bg-[#FFD700] text-[#121212] hover:bg-[#FFD700]/90'
+          }`}
+        >
+          {isGeneratingAI ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <span>generating...</span>
+            </div>
+          ) : (
+            <span>generate meme</span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="px-4 py-3 bg-[#1A1A1A] text-white/60 rounded-full font-['Poppins'] hover:text-white transition-all"
+        >
+          {showHistory ? 'Hide History' : 'Show History'}
+        </button>
+      </div>
+
+      {renderGenerationHistory()}
+    </div>
+  );
 
   return (
     <div className="relative min-h-screen">
@@ -397,35 +749,7 @@ function CreateMeme() {
             {/* Left Column - Upload/Preview */}
             <div className="w-1/2 space-y-6">
               {uploadMethod === 'ai' ? (
-                <div className="space-y-6">
-                  <textarea
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="write your prompt to generate meme"
-                    className="w-full h-32 px-6 py-4 bg-[#1A1A1A] text-white placeholder-white/40 rounded-2xl border border-[#FFD700]/20 focus:border-[#FFD700] focus:outline-none font-['Poppins']"
-                  />
-                  <button
-                    onClick={generateAIMeme}
-                    disabled={!aiPrompt || isGeneratingAI}
-                    className={`group w-full px-6 py-3 rounded-full font-['Poppins'] font-medium transition-all relative ${
-                      !aiPrompt || isGeneratingAI 
-                        ? 'bg-[#1A1A1A]/50 text-white/60' 
-                        : 'bg-[#FFD700] text-[#121212] hover:bg-[#FFD700]/90'
-                    }`}
-                  >
-                    {isGeneratingAI ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        <span>generating...</span>
-                      </div>
-                    ) : (
-                      <span>generate meme</span>
-                    )}
-                  </button>
-                </div>
+                renderAIGenerationForm()
               ) : (
                 <div className="relative">
                   <input
@@ -455,8 +779,17 @@ function CreateMeme() {
                 <div className="relative w-full aspect-square bg-[#1A1A1A] rounded-2xl overflow-hidden">
                   <img
                     src={imagePreview}
-                    alt="Uploaded meme"
+                    alt="Meme preview"
                     className="w-full h-full object-contain"
+                    onError={(e) => {
+                      console.error('Error loading image in component:', e);
+                      const target = e.target as HTMLImageElement;
+                      // Only try fallback if it's a URL (not base64)
+                      if (target.src.includes('mypinata.cloud')) {
+                        const ipfsHash = target.src.split('/ipfs/')[1];
+                        target.src = `https://ipfs.io/ipfs/${ipfsHash}`;
+                      }
+                    }}
                   />
                   <button
                     onClick={handleRemoveImage}
@@ -466,6 +799,8 @@ function CreateMeme() {
                   </button>
                 </div>
               )}
+
+              {variations.length > 0 && renderVariations()}
             </div>
 
             {/* Right Column - Form Fields */}
@@ -532,9 +867,9 @@ function CreateMeme() {
 
               <button
                 onClick={authenticated ? handleNext : login}
-                disabled={!acceptRoyalty || !imageFile || !formData.title}
+                disabled={!acceptRoyalty || (!imageFile && !formData.fileId) || !formData.title}
                 className={`w-full px-6 py-4 rounded-full font-['Poppins'] font-medium transition-all ${
-                  !acceptRoyalty || !imageFile || !formData.title
+                  !acceptRoyalty || (!imageFile && !formData.fileId) || !formData.title
                     ? 'bg-[#1A1A1A]/50 text-white/60'
                     : 'bg-[#FFD700] text-[#121212] hover:bg-[#FFD700]/90'
                 }`}
@@ -595,9 +930,10 @@ function CreateMeme() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4 font-['Poppins']">Submitting Your Meme</h2>
-                <p className="text-white/60 mb-8 font-['Poppins'] max-w-sm">
+                <p className="text-white/60 mb-4 font-['Poppins'] max-w-sm">
                   Please wait while we submit your meme to the blockchain...
                 </p>
+                {renderSubmissionLogs()}
               </div>
             ) : (
               <div className="text-center">
