@@ -109,7 +109,7 @@ Artifact.fun is a Web3-powered meme creation and discovery platform that transfo
 - Users earn **ranking NFTs** based on their activity (voting, creating memes, and participating in auctions).  
 - Ranking NFTs provide **exclusive benefits** within the Artifact.fun platform.
 
-## Sponsor
+## Integration
 
 ### [Safe Protocol](https://github.com/gungunjain36/Artifact.fun/blob/main/safe-agent/core/safe-account-manager.ts)
 - Account abstraction for secure meme management
